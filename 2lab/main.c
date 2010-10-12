@@ -127,19 +127,21 @@ char * insertInstruction(char *p) {
 			continue;	
 		} else if (isalpha(*p)) {
 			i = 0;
-			while(p[i] != '#' || p[i] != '\n') {
+			while(p[i] != '#' && p[i] != '\0') {
 				i++;
 			}
-			inst = malloc((i+1) * sizeof(char));
+			inst = malloc((i) * sizeof(char));
 			if(!inst) {
 				perror("parseLine");
 				exit(1);
 			}
 
-			strncpy(inst,p,i);
+			strncpy(inst,p,i-1);
 		} else {
 			fprintf(stderr, "Invalid syntax\n"); 
+			exit(1);
 		}
+
 	}
 	return inst;
 }
