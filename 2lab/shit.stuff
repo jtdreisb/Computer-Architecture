@@ -1,0 +1,38 @@
+/* 
+ * isComplete() 
+ *
+ * returns the position of the '\n' character in "line"
+ * returns negative upon error
+ */
+int isComplete(char *line, int size) {
+	int i;
+
+	for( i = 0; i < size ; i++) {
+		if(line[i] == '\n') {
+			return i;
+		}
+	}
+	return -1;
+}
+
+/*
+ * getFullLine()
+ *
+ * returns the position of the '\n' character in "line"
+ * returns negative upon error
+ */
+int getFullLine(char * buf, int *buf_size, int lineNum, FILE *f_asm) {
+	int old_size, index;
+	while((index = isComplete(buf,*buf_size)) < 0) {
+			old_size = *buf_size;
+			*buf_size *= 2;
+			if(*buf_size > 500) {
+				sprintf(buf,"Line %d: Too Long of a Line",lineNum);
+				die(NULL);
+			}	
+			buf = realloc(buf,*buf_size);
+			fgets(&(buf[old_size]),*buf_size - old_size, f_asm);
+			
+	}
+	return index;
+}

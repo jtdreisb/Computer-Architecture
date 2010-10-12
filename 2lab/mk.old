@@ -1,0 +1,4 @@
+all:
+	gcc -g -ansi -pedantic -Wall main.c -o mass
+clean: 
+	rm mass
