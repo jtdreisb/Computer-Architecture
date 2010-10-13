@@ -10,7 +10,13 @@
 #include <ctype.h>
 #include <string.h>
 
-#define  DEFAULT_ARR_SIZE 10
+#define	INST_SIZE			32
+#define	DEFAULT_ARR_SIZE 	10
+
+#define	TYPE_R				1
+#define	TYPE_I				2
+#define	TYPE_J				3
+
 typedef struct { 
 	char *name;
 	int line;
@@ -21,6 +27,8 @@ char * getLine(char *buf, int *size, FILE *fp);
 char ** parseLine(char *line);
 
 Label ** getLabelArr(int elements); 
+void generate(FILE *fp, char ** instArr, Label **lArr);
+
 void print_usage() {
 	printf("Usage:\n");
 	printf("\tmass <Filename>\n");
@@ -35,6 +43,7 @@ int main(int argc, char **argv) {
 	int line = 0;	
 	int buf_size = 10;
 	char ** instArr;
+
 	Label ** lArr;
 	buf = malloc(buf_size * sizeof(char));
 	
@@ -52,27 +61,30 @@ int main(int argc, char **argv) {
 	
 	while(!feof(f_asm)) {
 		buf = getLine(buf, &buf_size, f_asm);
-		printf("%d:\t%s\n",line,buf);	
+	/*	printf("%d:\t%s\n",line,buf);	*/
 		instArr = parseLine(buf);
 		line++;
 	}	
 	
-	printf("---- Valid Instructions ----\n");
+	/*
+	 * printf("---- Valid Instructions ----\n");
 	i = 0;
 	while(instArr[i]) {
 		printf("%d: %s\n", i, instArr[i]);
 		i++;
 	}
 	printf("---- Valid Labels ----\n");
+	*/
 	lArr = getLabelArr(0);
-	if(lArr) {
+	/*if(lArr) {
 		i = 0;
 		while(lArr[i]) {
 			printf("%d: %s\n", lArr[i]->line, lArr[i]->name); 
 			i++;
 		}	
-	}
+	}*/
 
+	generate(stdout, instArr, lArr);
 	free(buf);
 	fclose(f_asm);
 	return 0;
@@ -153,7 +165,7 @@ char * insertInstruction(char *p) {
 			}
 			inst = malloc((i+1) * sizeof(char));
 			if(!inst) {
-				perror("parseLine");
+				perror("insertInstruction");
 				exit(1);
 			}
 
@@ -167,19 +179,25 @@ char * insertInstruction(char *p) {
 	}
 	return inst;
 }
+
+int * getiCount() {
+	static int iCount = 0;
+	return &iCount;
+}
+
 char ** parseLine(char *line) {
 	int i;
 
-	static int iCount = 0;
 	static int iArrSize = DEFAULT_ARR_SIZE;
 	static char **instructionArray = NULL;
+	int *iCount = getiCount();
 
 
 	if(!instructionArray) {
 		instructionArray = calloc(iArrSize, sizeof(char*));
 	}
 	
-	if(iCount == iArrSize-1) {
+	if(*iCount == iArrSize-1) {
 		iArrSize = iArrSize + DEFAULT_ARR_SIZE;
 		instructionArray = realloc(instructionArray, iArrSize * sizeof(char*));	
 	}
@@ -193,26 +211,26 @@ char ** parseLine(char *line) {
 			for(i = 0; line[i] != '\0'; i++) {
 				if(line[i] == '#') {
 					line[i] = '\0';
-					instructionArray[iCount] = insertInstruction(line);
-					if(instructionArray[iCount]) {
-						iCount++;
-					}
+					i = 0;
 					break;
 				} else if(line[i] == ':') {
-					addToLabels(line,iCount);
-					instructionArray[iCount] = insertInstruction(&line[i+1]);
-					if(instructionArray[iCount]) {
-						iCount++;
-					}
+					addToLabels(line,*iCount);
+					i++;
+					line = &line[i];
 					break;
 				} 
 				
 			}
+			instructionArray[*iCount] = insertInstruction(line);
+			if(instructionArray[*iCount]) {
+					(*iCount)++;
+				}
+
 		} else if (isspace(line[0])) {
-			instructionArray[iCount] = insertInstruction(line);			
-			if(instructionArray[iCount]) {
-						iCount++;
-					}
+			instructionArray[*iCount] = insertInstruction(line);			
+			if(instructionArray[*iCount]) {
+						(*iCount)++;
+			}
 		}		
 	}
 
@@ -251,4 +269,121 @@ char * getLine(char *buf, int *size, FILE *fp) {
 
 	return line;
 }
+/*
+ * returns type of instruction
+ * 0 - failure
+ * 1 - register
+ * 2 - immediate
+ * 3 - jump
+ */
 
+int getInstType(char *inst, char *code) {
+	if(!strcmp("and", inst))	 {
+		code[26] = '1';	
+		code[29] = '1';	
+		return TYPE_R;
+	} else if (!strcmp("or",inst)) {
+		code[26] = '1';	
+		code[29] = '1';	
+		code[31] = '1';	
+		return TYPE_R;
+	} else if (!strcmp("add",inst)) {
+		code[26] = '1';	
+		return TYPE_R;
+	} else if (!strcmp("addi",inst)) {
+		code[2] = '1';	
+		return TYPE_I;
+	} else if (!strcmp("sub",inst)) {
+		code[26] = '1';	
+		code[30] = '1';	
+		return TYPE_R;
+	} else if (!strcmp("slt",inst)) {
+		code[26] = '1';	
+		code[28] = '1';	
+		code[30] = '1';	
+		return TYPE_R;
+	} else if (!strcmp("beq",inst)) {
+		code[3] = '1';	
+		return TYPE_I;
+	} else if (!strcmp("bne",inst)) {
+		code[3] = '1';	
+		code[5] = '1';	
+		return TYPE_I;
+	} else if (!strcmp("lw",inst)) {
+		code[0] = '1';	
+		code[4] = '1';	
+		code[5] = '1';	
+		return TYPE_I;
+	} else if (!strcmp("sw",inst)) {
+		code[0] = '1';	
+		code[2] = '1';	
+		code[4] = '1';	
+		code[5] = '1';	
+		return TYPE_I;
+	} else if (!strcmp("j",inst)) {
+		code[4] = '1';	
+		return TYPE_J;
+	} else if (!strcmp("jr",inst)) {
+		code[28] = '1';	
+		return TYPE_R;
+	} else if (!strcmp("jal",inst)) {
+		code[4] = '1';	
+		code[5] = '1';	
+		return TYPE_J;
+	} else  {
+		fprintf(stderr, "InvalidInstruction: %s\n", inst);
+		exit(1);
+	}
+
+}
+
+void parseArgs(char *arg, int iType,char * code) {
+	
+}
+void parseInstruction(FILE * fp, const char * instruction, int insIndex, Label ** lArr) {
+	char code[INST_SIZE+1];
+	char *inst, *p;
+	int i, iType;
+
+	if(instruction) {
+		inst = malloc((strlen(instruction) +1) * sizeof(char));
+	} else {
+		fprintf(stderr, "instruction is NULL") ;
+		exit(1);
+	}
+	strcpy(inst, instruction);
+ 
+	for(i=0;i< INST_SIZE; i++) {
+		code[i] = '0';
+	}
+	code[INST_SIZE] = '\0';
+
+	i=0;
+	while(!isspace(inst[i])) {
+		i++;
+	}
+	inst[i] = '\0';
+	/* we need inst to free it
+	 * therefore use p to traverse the rest
+	 */
+	p =	 &inst[i+1];
+
+
+	/* determine instruction type */
+	iType = getInstType(inst, code);
+
+
+	parseArgs(p, iType, code);
+
+	fprintf(fp,"%s\n",code);
+	free(inst);
+}
+
+void generate(FILE *fp, char ** instArr, Label **lArr) {
+	int i;
+	int *iCount = getiCount();
+	
+	for(i=0;i<*iCount;i++) {
+		parseInstruction(fp, instArr[i], i, lArr);	
+	}	
+}
