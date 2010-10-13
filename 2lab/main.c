@@ -10,6 +10,7 @@
 #include <ctype.h>
 #include <string.h>
 
+#define  INST_ARR_DEFAULT_SIZE 10
 typedef struct { 
 	char *name;
 	int line;
@@ -19,6 +20,7 @@ char * resizeBuf(char *buf, int *size);
 char * getLine(char *buf, int *size, FILE *fp);
 char ** parseLine(char *line);
 
+Label ** getLabelArr(int *size); 
 void print_usage() {
 	printf("Usage:\n");
 	printf("\tmass <Filename>\n");
@@ -29,10 +31,13 @@ void print_usage() {
 int main(int argc, char **argv) {
 	FILE *f_asm;
 	char *buf;
+	int i;
 	int line = 0;	
 	int buf_size = 10;
+	char ** instArr;
+	Label ** lArr;
 	buf = malloc(buf_size * sizeof(char));
-
+	
 	if(argc < 2) {
 		print_usage();
 	}
@@ -48,9 +53,22 @@ int main(int argc, char **argv) {
 	while(!feof(f_asm)) {
 		buf = getLine(buf, &buf_size, f_asm);
 		printf("%d:\t%s\n",line,buf);	
-		parseLine(buf);
+		instArr = parseLine(buf);
 		line++;
 	}	
+	
+	printf("---- Valid Instructions ----\n");
+	while(*instArr) {
+		printf("%s\n", *instArr++);
+	}
+	printf("---- Valid Labels ----\n");
+	lArr = getLabelArr(NULL);
+	if(lArr) {
+		i = 0;
+		while(lArr[i]) {
+			printf("%d: %s\n", lArr[i]->line, lArr[i]->name); 
+		}	
+	}
 
 	free(buf);
 	fclose(f_asm);
@@ -60,13 +78,17 @@ int main(int argc, char **argv) {
 Label ** getLabelArr(int *size) {
 	static Label ** arr = NULL;
 	if(!arr) {
-		arr = calloc((*size), sizeof(Label*));
+		if(size) {
+			arr = calloc((*size), sizeof(Label*));
+		} else {
+			arr = calloc(10, sizeof(Label*));
+		}
 		if(!arr) {
 			perror("getLabelArr");
 			exit(1);
 		}
 		
-	}
+	} 
 	return arr;
 }
 
@@ -119,7 +141,7 @@ Label ** addToLabels(char *line, int lineNo) {
 }
 
 char * insertInstruction(char *p) {
-	char *inst;
+	char *inst = NULL;
 	int i;
 	while(*p) {
 		if(isspace(*p)) {
@@ -130,13 +152,14 @@ char * insertInstruction(char *p) {
 			while(p[i] != '#' && p[i] != '\0') {
 				i++;
 			}
-			inst = malloc((i) * sizeof(char));
+			inst = malloc((i+1) * sizeof(char));
 			if(!inst) {
 				perror("parseLine");
 				exit(1);
 			}
 
-			strncpy(inst,p,i-1);
+			strncpy(inst,p,i);
+			break;
 		} else {
 			fprintf(stderr, "Invalid syntax\n"); 
 			exit(1);
@@ -149,36 +172,50 @@ char ** parseLine(char *line) {
 	int i;
 
 	static int iCount = 0;
-	static int iArrSize = 10;
+	static int iArrSize = INST_ARR_DEFAULT_SIZE;
 	static char **instructionArray = NULL;
 
 
 	if(!instructionArray) {
-		instructionArray = malloc(iArrSize * sizeof(char*));
+		instructionArray = calloc(iArrSize, sizeof(char*));
 	}
-
-	/* 
-	 * If the start of the line is either a digit or char
-	 * then line could possibly be a label
-	 * or valid instruction
-	 */
-	if(isalpha(line[0]) || isdigit(line[0])) {
-		for(i = 0; line != '\0'; i++) {
-			if(line[i] == '#' || line[i] == '\n') {
-				line[i] = '\0';
-				if(strlen(line) > 1) {
+	
+	if(iCount == iArrSize-1) {
+		iArrSize = iArrSize + INST_ARR_DEFAULT_SIZE;
+		instructionArray = realloc(instructionArray, iArrSize * sizeof(char*));	
+	}
+	if(line) {
+		/* 
+		 * If the start of the line is either a digit or char
+		 * then line could possibly be a label
+		 * or valid instruction
+		 */
+		if(isalpha(line[0]) || isdigit(line[0])) {
+			for(i = 0; line[i] != '\0'; i++) {
+				if(line[i] == '#') {
+					line[i] = '\0';
+					instructionArray[iCount] = insertInstruction(line);
+					if(instructionArray[iCount]) {
+						iCount++;
+					}
 					break;
-				}
-			} else if(line[i] == ':') {
-				addToLabels(line,iCount);
-				instructionArray[iCount++] = insertInstruction(&line[i+1]);
-				break;
-			} 
-			
-		}
-	} else if (isspace(line[0])) {
-		instructionArray[iCount++] = insertInstruction(line);			
-	}		
+				} else if(line[i] == ':') {
+					addToLabels(line,iCount);
+					instructionArray[iCount] = insertInstruction(&line[i+1]);
+					if(instructionArray[iCount]) {
+						iCount++;
+					}
+					break;
+				} 
+				
+			}
+		} else if (isspace(line[0])) {
+			instructionArray[iCount] = insertInstruction(line);			
+			if(instructionArray[iCount]) {
+						iCount++;
+					}
+		}		
+	}
 
 	return instructionArray;
 }
