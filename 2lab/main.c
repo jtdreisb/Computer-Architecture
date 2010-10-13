@@ -338,7 +338,30 @@ int getInstType(char *inst, char *code) {
 }
 
 void parseArgs(char *arg, int iType,char * code) {
-	
+	char *p;
+
+	p = arg;
+	while (isspace(*p)) {
+		p++;
+	}	
+
+	if(iType == TYPE_R) {
+		p = getReg(code, p, REG_1);
+		while (isspace(*p)) {
+			p++;
+		}
+		p = getReg(code, p, REG_2);
+		while (isspace(*p)) {
+			p++;
+		}
+		p = getReg(code, p, REG_3);
+	} else if(iType == TYPE_I) {
+
+	} else if(iType == TYPE_J) {
+
+	} else {
+
+	}
 }
 void parseInstruction(FILE * fp, const char * instruction, int insIndex, Label ** lArr) {
 	char code[INST_SIZE+1];
