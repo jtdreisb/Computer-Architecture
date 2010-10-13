@@ -10,7 +10,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#define  INST_ARR_DEFAULT_SIZE 10
+#define  DEFAULT_ARR_SIZE 10
 typedef struct { 
 	char *name;
 	int line;
@@ -20,7 +20,7 @@ char * resizeBuf(char *buf, int *size);
 char * getLine(char *buf, int *size, FILE *fp);
 char ** parseLine(char *line);
 
-Label ** getLabelArr(int *size); 
+Label ** getLabelArr(int elements); 
 void print_usage() {
 	printf("Usage:\n");
 	printf("\tmass <Filename>\n");
@@ -58,15 +58,18 @@ int main(int argc, char **argv) {
 	}	
 	
 	printf("---- Valid Instructions ----\n");
-	while(*instArr) {
-		printf("%s\n", *instArr++);
+	i = 0;
+	while(instArr[i]) {
+		printf("%d: %s\n", i, instArr[i]);
+		i++;
 	}
 	printf("---- Valid Labels ----\n");
-	lArr = getLabelArr(NULL);
+	lArr = getLabelArr(0);
 	if(lArr) {
 		i = 0;
 		while(lArr[i]) {
 			printf("%d: %s\n", lArr[i]->line, lArr[i]->name); 
+			i++;
 		}	
 	}
 
@@ -75,20 +78,29 @@ int main(int argc, char **argv) {
 	return 0;
 }
 
-Label ** getLabelArr(int *size) {
+Label ** getLabelArr(int elements) {
 	static Label ** arr = NULL;
+	static int size = DEFAULT_ARR_SIZE;
 	if(!arr) {
 		if(size) {
-			arr = calloc((*size), sizeof(Label*));
+			arr = calloc((size), sizeof(Label*));
 		} else {
-			arr = calloc(10, sizeof(Label*));
 		}
 		if(!arr) {
 			perror("getLabelArr");
 			exit(1);
 		}
 		
-	} 
+	} else { 
+		if(elements == size-1) {
+			size = size + DEFAULT_ARR_SIZE;
+			arr = realloc(arr, size * sizeof(Label*));
+		}
+		if(!arr) {
+			perror("getLabelArr");
+			exit(1);
+		}
+	}
 	return arr;
 }
 
@@ -96,7 +108,6 @@ Label ** addToLabels(char *line, int lineNo) {
 	char *label;
 	int i, lineLen = 0;
 	static int	curArri = 0;
-	static int  arrSize = 10;
 
 	Label ** arr = NULL;
 	Label * lbl = NULL;
@@ -110,32 +121,20 @@ Label ** addToLabels(char *line, int lineNo) {
 	label = malloc((i + 1) * sizeof(char));
 	memcpy(label, line, i);
 	label[i] = '\0';
-	if(!arr) {
-		arr = getLabelArr(&arrSize);
-	}
-	else if (curArri == arrSize) {
-			arrSize = arrSize * 2;
-			arr = realloc(arr, arrSize);
-			if(!arr) {
-				perror("arr realloc");
-				exit(1);
 
-			}
+	arr = getLabelArr(curArri);
 
+	/* add to array here */
+	/*curArri is the current index in the array*/
+	lbl = malloc(sizeof(Label*));	
+	if(!lbl) {
+		perror("addLabel");
+		exit(1);
 	}
-	else {
-		/* add to array here but ran out of time to finish*/
-		/*curArri is the current index in the array*/
-		lbl = malloc(sizeof(Label*));	
-		if(!lbl) {
-			perror("addLabel");
-			exit(1);
-		}
-		lbl->name = label;
-		lbl->line = lineNo;
-		arr[curArri] = lbl;	
-		curArri++;
-	}
+	lbl->name = label;
+	lbl->line = lineNo;
+	arr[curArri] = lbl;	
+	curArri++;
 
 	return arr;
 }
@@ -172,7 +171,7 @@ char ** parseLine(char *line) {
 	int i;
 
 	static int iCount = 0;
-	static int iArrSize = INST_ARR_DEFAULT_SIZE;
+	static int iArrSize = DEFAULT_ARR_SIZE;
 	static char **instructionArray = NULL;
 
 
@@ -181,7 +180,7 @@ char ** parseLine(char *line) {
 	}
 	
 	if(iCount == iArrSize-1) {
-		iArrSize = iArrSize + INST_ARR_DEFAULT_SIZE;
+		iArrSize = iArrSize + DEFAULT_ARR_SIZE;
 		instructionArray = realloc(instructionArray, iArrSize * sizeof(char*));	
 	}
 	if(line) {
