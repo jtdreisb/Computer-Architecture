@@ -16,6 +16,12 @@
 #define	TYPE_R				1
 #define	TYPE_I				2
 #define	TYPE_J				3
+#define TYPE_JR				4
+#define TYPE_LS				5
+
+#define REG_D				15
+#define REG_S				5
+#define REG_T				10
 
 typedef struct { 
 	char *name;
@@ -39,7 +45,6 @@ void print_usage() {
 int main(int argc, char **argv) {
 	FILE *f_asm;
 	char *buf;
-	int i;
 	int line = 0;	
 	int buf_size = 10;
 	char ** instArr;
@@ -313,19 +318,19 @@ int getInstType(char *inst, char *code) {
 		code[0] = '1';	
 		code[4] = '1';	
 		code[5] = '1';	
-		return TYPE_I;
+		return TYPE_LS;
 	} else if (!strcmp("sw",inst)) {
 		code[0] = '1';	
 		code[2] = '1';	
 		code[4] = '1';	
 		code[5] = '1';	
-		return TYPE_I;
+		return TYPE_LS;
 	} else if (!strcmp("j",inst)) {
 		code[4] = '1';	
 		return TYPE_J;
 	} else if (!strcmp("jr",inst)) {
 		code[28] = '1';	
-		return TYPE_R;
+		return TYPE_JR;
 	} else if (!strcmp("jal",inst)) {
 		code[4] = '1';	
 		code[5] = '1';	
@@ -337,30 +342,285 @@ int getInstType(char *inst, char *code) {
 
 }
 
-void parseArgs(char *arg, int iType,char * code) {
+void getRegErr(char *s) {
+	fprintf(stderr, "getReg: %s\n",s);
+	exit(1);
+}
+
+char * getReg(char * code, char *arg, int reg) {
+	char *p = arg;	
+	if(*p != '$') {
+		fprintf(stderr, arg);
+		fprintf(stderr,"\n");
+		fprintf(stderr,"getReg: invalid REG\n");
+		exit(1);
+	}	
+	p++;
+
+	switch(*p++) {
+		case '0':
+		case 'z':
+			break;
+		case 'v':
+			switch(*p) {
+				case '0': 
+					code[reg+4] = '1';	
+					break;
+				case '1': 
+					code[reg+4] = '1';	
+					code[reg+5] = '1';	
+					break;
+				default:
+					getRegErr(arg);
+					break;
+			}
+			break;
+		case 'a':
+			switch(*p) {
+				case '0': 
+					code[reg+3] = '1';	
+					break;
+				case '1': 
+					code[reg+3] = '1';	
+					code[reg+5] = '1';	
+					break;
+				case '2': 
+					code[reg+3] = '1';	
+					code[reg+4] = '1';	
+					break;
+				case '3': 
+					code[reg+3] = '1';	
+					code[reg+4] = '1';	
+					code[reg+5] = '1';	
+					break;
+			}
+			break;
+		case 't':
+			switch(*p) {
+				case '0': 
+					code[reg+2] = '1';	
+					break;
+				case '1': 
+					code[reg+2] = '1';	
+					code[reg+5] = '1';	
+					break;
+				case '2': 
+					code[reg+2] = '1';	
+					code[reg+4] = '1';	
+					break;
+				case '3': 
+					code[reg+2] = '1';	
+					code[reg+4] = '1';	
+					code[reg+5] = '1';	
+					break;
+				case '4': 
+					code[reg+2] = '1';	
+					code[reg+3] = '1';	
+					break;
+				case '5': 
+					code[reg+2] = '1';	
+					code[reg+3] = '1';	
+					code[reg+5] = '1';	
+					break;
+				case '6': 
+					code[reg+2] = '1';	
+					code[reg+3] = '1';	
+					code[reg+4] = '1';	
+					break;
+				case '7': 
+					code[reg+2] = '1';	
+					code[reg+3] = '1';	
+					code[reg+4] = '1';	
+					code[reg+5] = '1';	
+					break;
+				case '8': 
+					code[reg+1] = '1';	
+					code[reg+2] = '1';	
+					break;
+				case '9': 
+					code[reg+1] = '1';	
+					code[reg+2] = '1';	
+					code[reg+5] = '1';	
+					break;
+				default:
+					getRegErr(arg);
+					break;
+			}
+			break;
+		case 's':
+			switch(*p) {
+				case '0': 
+					code[reg+1] = '1';	
+					break;
+				case '1': 
+					code[reg+1] = '1';	
+					code[reg+5] = '1';	
+					break;
+				case '2': 
+					code[reg+1] = '1';	
+					code[reg+4] = '1';	
+					break;
+				case '3': 
+					code[reg+1] = '1';	
+					code[reg+4] = '1';	
+					code[reg+5] = '1';	
+					break;
+				case '4': 
+					code[reg+1] = '1';	
+					code[reg+3] = '1';	
+					break;
+				case '5': 
+					code[reg+1] = '1';	
+					code[reg+3] = '1';	
+					code[reg+5] = '1';	
+					break;
+				case '6': 
+					code[reg+1] = '1';	
+					code[reg+3] = '1';	
+					code[reg+4] = '1';	
+					break;
+				case '7': 
+					code[reg+1] = '1';	
+					code[reg+3] = '1';	
+					code[reg+4] = '1';	
+					code[reg+5] = '1';	
+					break;
+				case 'p': 
+					code[reg+1] = '1';	
+					code[reg+2] = '1';	
+					code[reg+3] = '1';	
+					code[reg+5] = '1';	
+					break;
+				default:
+					getRegErr(arg);
+					break;
+			}
+			break;
+		case 'r':
+			if(*p == 'a') {
+					code[reg+1] = '1';	
+					code[reg+2] = '1';	
+					code[reg+3] = '1';	
+					code[reg+4] = '1';	
+					code[reg+5] = '1';	
+
+			} else {
+				getRegErr(arg);
+			}
+			break;
+		default:
+			getRegErr(arg);
+			break;
+	}
+
+	while(*p != ',' && *p != ')' && *p != '\0') {
+		p++;
+	}
+	p++;
+	return p;
+}
+
+int getLabelOffset(char *arg, int curIndex) {
+	Label **lArr;
+	int imm;
+	int iCount;
+	char *p = arg;
+	lArr = getLabelArr(0);			
+	iCount = 0;
+	while(lArr[iCount]) {
+		while(!isspace(*p) && *p != '\0') {
+			p++;
+		}	
+		*p = '\0';
+		if(!strcmp(lArr[iCount]->name,arg)) {
+			imm = lArr[iCount]->line - (curIndex+1);
+			break;
+		}
+		iCount++;
+	}
+	return imm;
+}
+
+void getImmediate(char *code,char *arg, int curIndex) {
+		int i = 16;
+		int imm;
+		int bitmask = 0x8000;
+		if(isdigit(arg[0]) || arg[0] == '-') {
+			sscanf(arg, "%d", &imm);
+		} else {
+			imm = getLabelOffset(arg,curIndex);			
+		}
+		while(bitmask) {
+			if(bitmask & imm) {
+				code[i] = '1';	
+			} 
+			i++;
+			bitmask = bitmask/2;
+		}
+}
+void parseMem(char *arg, char *code) {
+	char *p;
+	int offset;
+	int i = 16;
+	int bitmask = 0x8000;
+	p = arg;
+	sscanf(arg,"%d(",&offset);	
+	while(*p && *p != '$') {
+		p++;
+	}
+	getReg(code,p,REG_S);	
+	while(bitmask) {
+		if(bitmask & offset) {
+			code[i] = '1';	
+		} 
+		i++;
+		bitmask = bitmask/2;
+	}
+}
+
+void parseArgs(char *arg, int iType,char * code, int curIndex) {
 	char *p;
 
 	p = arg;
 	while (isspace(*p)) {
 		p++;
 	}	
-
 	if(iType == TYPE_R) {
-		p = getReg(code, p, REG_1);
+		p = getReg(code, p, REG_D);
 		while (isspace(*p)) {
 			p++;
 		}
-		p = getReg(code, p, REG_2);
+		p = getReg(code, p, REG_S);
 		while (isspace(*p)) {
 			p++;
 		}
-		p = getReg(code, p, REG_3);
+		p = getReg(code, p, REG_T);
+	} else if(iType == TYPE_JR) {
+		p = getReg(code, p, REG_S);
 	} else if(iType == TYPE_I) {
-
+		p = getReg(code, p, REG_S);
+		while (isspace(*p)) {
+			p++;
+		}
+		p = getReg(code, p, REG_T);
+		while (isspace(*p)) {
+			p++;
+		}
+		getImmediate(code, p, curIndex);
 	} else if(iType == TYPE_J) {
-
+		while (isspace(*p)) {
+			p++;
+		}
+		getImmediate(code, p, -1);
+	} else if(iType == TYPE_LS) {
+		p = getReg(code, p, REG_T);
+		while (isspace(*p)) {
+			p++;
+		}
+		parseMem(p, code);
 	} else {
-
+		fprintf(stderr, "DiE IDE DIE\n");
+		exit(1);
 	}
 }
 void parseInstruction(FILE * fp, const char * instruction, int insIndex, Label ** lArr) {
@@ -382,6 +642,7 @@ void parseInstruction(FILE * fp, const char * instruction, int insIndex, Label *
 	code[INST_SIZE] = '\0';
 
 	i=0;
+
 	while(!isspace(inst[i])) {
 		i++;
 	}
@@ -395,10 +656,81 @@ void parseInstruction(FILE * fp, const char * instruction, int insIndex, Label *
 	/* determine instruction type */
 	iType = getInstType(inst, code);
 
+	parseArgs(p, iType, code, insIndex);
 
-	parseArgs(p, iType, code);
+	if(iType == TYPE_R ) {
+		for(i=0;i < 6;i++) {
+			fprintf(fp, "%c",code[i]);
+		}
+		fprintf(fp, " ");
+		for(;i < 11; i++) {
+			fprintf(fp, "%c", code[i]);
+		}
+		fprintf(fp, " ");
+		for(;i < 16; i++) {
+			fprintf(fp, "%c", code[i]);
+		}
+		fprintf(fp, " ");
+		for(;i < 21; i++) {
+			fprintf(fp, "%c", code[i]);
+		}
+		fprintf(fp, " ");
+		for(;i < 26; i++) {
+			fprintf(fp, "%c", code[i]);
+		}
+		fprintf(fp, " ");
+		for(;i < INST_SIZE; i++) {
+			fprintf(fp, "%c", code[i]);
+		}
+		fprintf(fp,"\n");
+	} else if (iType == TYPE_I || iType == TYPE_LS) {
+		for(i=0;i < 6;i++) {
+			fprintf(fp, "%c",code[i]);
+		}
+		fprintf(fp, " ");
+		for(;i < 11; i++) {
+			fprintf(fp, "%c", code[i]);
+		}
+		fprintf(fp, " ");
+		for(;i < 16; i++) {
+			fprintf(fp, "%c", code[i]);
+		}
+		fprintf(fp, " ");
+		for(;i < INST_SIZE; i++) {
+			fprintf(fp, "%c", code[i]);
+		}
+		fprintf(fp,"\n");
+	} else if (iType == TYPE_JR) {
+		for(i=0;i < 6;i++) {
+			fprintf(fp, "%c",code[i]);
+		}
+		fprintf(fp, " ");
+		for(;i < 11; i++) {
+			fprintf(fp, "%c", code[i]);
+		}
+		fprintf(fp, " ");
+		for(;i < 26; i++) {
+			fprintf(fp, "%c", code[i]);
+		}
+		fprintf(fp, " ");
+		for(;i < INST_SIZE; i++) {
+			fprintf(fp, "%c", code[i]);
+		}
+		fprintf(fp,"\n");
+	} else if (iType == TYPE_J) {
+		for(i=0;i < 6;i++) {
+			fprintf(fp, "%c",code[i]);
+		}
+		fprintf(fp, " ");
+		for(;i < INST_SIZE; i++) {
+			fprintf(fp, "%c", code[i]);
+		}
+		fprintf(fp, " ");
 
-	fprintf(fp,"%s\n",code);
+		fprintf(fp,"\n");
+	} else {
+		fprintf(fp,"\n");
+	}
 	free(inst);
 }
 
