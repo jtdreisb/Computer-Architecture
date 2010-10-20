@@ -12,18 +12,6 @@
 
 #include "parser.h"
 
-#define	INST_SIZE			32
-#define	DEFAULT_ARR_SIZE 	10
-
-#define	TYPE_R				1
-#define	TYPE_I				2
-#define	TYPE_J				3
-#define TYPE_JR				4
-#define TYPE_LS				5
-
-#define REG_D				15
-#define REG_S				5
-#define REG_T				10
 
 typedef struct { 
 	char *name;
@@ -44,7 +32,7 @@ int parse(char *f_in, char *f_out) {
 	FILE *f_mach;
 	char *buf;
 	int line = 0;	
-	int buf_size = 10;
+	int buf_size = BUFSIZE;
 	char ** instArr;
 
 	Label ** lArr;

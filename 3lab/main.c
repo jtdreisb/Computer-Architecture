@@ -15,21 +15,36 @@ int main(int argc, char **argv) {
 	FILE *f_in;
 
 	char *outFile = "machine.o";	
-	int hasScript = 0;
+	int buf_size = BUFSIZE;
+	char *buf = malloc(buf_size);
 
 	if(argc < 2 || argc > 3) {
 		print_usage(argv[0]);
 	}
 
-	if(parse(argv[1],outFile)) {
+	if(parse(argv[1], outFile)) {
 		fprintf(stderr, "There was an error");
 	}
 
 	if(argc == 3) {
-		f_in = open(argv[2], "r");
+		f_in = fopen(argv[2], "r");
 	} else {
 		f_in = stdin;
 	}
+	if(!f_in) {
+		perror("MAIN\n");
+		exit(1);
+	}
+	
+	parse(argv[1], outFile);
+
+	while(!feof(f_in)){
+		buf = getLine(buf, &buf_size, f_in);
+
+			
+
+	}
+
 
 
 	
@@ -37,7 +52,6 @@ int main(int argc, char **argv) {
 }
 
 void print_usage(char *arg0) {
-	fprintf(stdout, "USAGE:\n\t%s <file.asm>\n",arg0);
-	fflush(stdout);
+	fprintf(stderr, "USAGE:\n\t%s <file.asm>\n",arg0);
 	exit(1);
 }
