@@ -8,9 +8,9 @@ TARGET = lab3
 
 OBJS = $(TARGET).o
 
-SRC = main.c parser.c
+SRC = main.c parser.c mipsCPU.c
 
-HEADERS = parser.h
+HEADERS = parser.h mipsCPU.h
 
 EXTRACLEAN = $(TARGET) 
 

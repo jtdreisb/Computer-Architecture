@@ -33,10 +33,11 @@ typedef enum {
 /* Processor Definition */
 typedef struct {
 	int pc;
-	int reg[27];
+	int reg[32];
 	int dmem[8192];
 }MIPS_CPU;
 
 
 
+void initMIPS ();
 int execute(char *code);

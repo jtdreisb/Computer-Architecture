@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "parser.h"
+#include "mipsCPU.h"
 
 void print_usage(char *arg0);
 
@@ -36,6 +37,7 @@ int main(int argc, char **argv) {
 		exit(1);
 	}
 	
+	initMIPS();
 	parse(argv[1], outFile);
 
 	while(!feof(f_in)){
