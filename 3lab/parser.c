@@ -27,7 +27,7 @@ void generate(FILE *fp, char ** instArr, Label **lArr);
 
 
 
-int parse(char *f_in, char *f_out) {
+char **parse(char *f_in, char *f_out) {
 	FILE *f_asm;
 	FILE *f_mach;
 	char *buf;
@@ -86,7 +86,7 @@ int parse(char *f_in, char *f_out) {
 	fclose(f_asm);
 	fclose(f_mach);
 
-	return 0;
+	return instArr;
 }
 
 Label ** getLabelArr(int elements) {

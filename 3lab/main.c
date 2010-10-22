@@ -11,43 +11,64 @@
 #include "mipsCPU.h"
 
 void print_usage(char *arg0);
+void printHelp();
 
 int main(int argc, char **argv) {
-	FILE *f_in;
+	FILE *c_fp;
 
 	char *outFile = "machine.o";	
-	int buf_size = BUFSIZE;
-	char *buf = malloc(buf_size);
-
-	if(argc < 2 || argc > 3) {
-		print_usage(argv[0]);
+	int cbuf_size = BUFSIZE;
+	char **instArr;
+   	char *cbuf = malloc(cbuf_size);
+	if(!cbuf){
+		perror("mallocing bufs");
+		exit(1);
 	}
-
-	if(parse(argv[1], outFile)) {
-		fprintf(stderr, "There was an error");
+	if(argc < 2 || argc > 3) {
+		print_usage(argv[2]);
 	}
 
 	if(argc == 3) {
-		f_in = fopen(argv[2], "r");
+		c_fp = fopen(argv[2], "r");
 	} else {
-		f_in = stdin;
+		c_fp = stdin;
 	}
-	if(!f_in) {
+	if(!c_fp) {
 		perror("MAIN\n");
 		exit(1);
 	}
 	
 	initMIPS();
-	parse(argv[1], outFile);
-
-	while(!feof(f_in)){
-		buf = getLine(buf, &buf_size, f_in);
-
-			
-
+	if(!(instArr = parse(argv[1], outFile))) {
+		fprintf(stderr, "There was an error");
 	}
 
-
+	while(!feof(c_fp)){
+		fprintf(stdout, "mips> ");
+		cbuf = getLine(cbuf, &cbuf_size, c_fp);
+		switch(cbuf[0]) {	
+		case 'h':
+			printHelp();
+			break;
+		case 'd':
+			dumpRegs();
+			break;
+		case 's':
+			break;
+		case 'r':
+			break;
+		case 'm':
+			break;
+		case 'c':
+			zeroCPU();
+			break;
+		case 'q':
+			break;
+		default:
+			fprintf(stdout, "Invalid command\n");
+			break; 
+		}
+	}
 
 	
 	return 0;
@@ -56,4 +77,16 @@ int main(int argc, char **argv) {
 void print_usage(char *arg0) {
 	fprintf(stderr, "USAGE:\n\t%s <file.asm>\n",arg0);
 	exit(1);
+}
+
+void printHelp() {
+	printf("\n\th = show help\n"
+	"\td = dump register state\n"
+	"\ts = single step through the program (i.e. execute 1 instruction and stop)\n"
+	"\ts num = step through num instructions of the program\n"
+	"\tr = run until the program ends\n"
+	"\tm num1 num2 = display data memory from location num1 to num2 \n"
+	"\tc = clear all registers, memory, and the program counter to 0\n"
+	"\tq = exit the program\n");
+
 }

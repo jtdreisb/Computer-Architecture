@@ -41,3 +41,5 @@ typedef struct {
 
 void initMIPS ();
 int execute(char *code);
+void dumpRegs();
+void zeroCPU();
