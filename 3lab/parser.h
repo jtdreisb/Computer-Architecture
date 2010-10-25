@@ -20,5 +20,6 @@
 #define REG_S				5
 #define REG_T				10
 
-char ** parse(char *f_in, char *f_out);
+void parse(char *f_in, char *f_out);
 char * getLine(char *buf, int *size, FILE *fp); 
+int * getiCount();

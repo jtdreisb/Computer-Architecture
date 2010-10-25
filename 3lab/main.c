@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include "parser.h"
 #include "mipsCPU.h"
 
@@ -14,18 +15,21 @@ void print_usage(char *arg0);
 void printHelp();
 
 int main(int argc, char **argv) {
-	FILE *c_fp;
+	FILE *c_fp, *i_fp;
 
 	char *outFile = "machine.o";	
 	int cbuf_size = BUFSIZE;
+	int ibuf_size = BUFSIZE;
 	char **instArr;
+	int i, repeat, iCount;
+
    	char *cbuf = malloc(cbuf_size);
 	if(!cbuf){
 		perror("mallocing bufs");
 		exit(1);
 	}
 	if(argc < 2 || argc > 3) {
-		print_usage(argv[2]);
+		print_usage(NULL);
 	}
 
 	if(argc == 3) {
@@ -39,9 +43,33 @@ int main(int argc, char **argv) {
 	}
 	
 	initMIPS();
-	if(!(instArr = parse(argv[1], outFile))) {
-		fprintf(stderr, "There was an error");
+	parse(argv[1], outFile); 
+	i_fp = fopen(outFile, "r");
+	if(!i_fp) {
+		perror("can't open outFile");
+		exit(1);
 	}
+	instArr = malloc(ibuf_size * sizeof(char *));
+	if(!instArr) {
+		perror("malloc instArr");
+		exit(1);
+	}
+	i = 0;
+
+	while(!feof(i_fp)) {
+		if(i == ibuf_size) {
+			ibuf_size = ibuf_size + BUFSIZE;
+			instArr = realloc(instArr, ibuf_size);
+			if(!instArr) {
+				perror("realloc instArr");
+				exit(1);
+			}
+		}
+		fprintf(stdout, "%d: ", i);
+		instArr[i++] = getLine(cbuf, &cbuf_size, i_fp);	
+		fprintf(stdout, "%s\n", instArr[i-1]);
+	}
+	iCount = i-1;
 
 	while(!feof(c_fp)){
 		fprintf(stdout, "mips> ");
@@ -54,8 +82,19 @@ int main(int argc, char **argv) {
 			dumpRegs();
 			break;
 		case 's':
+			repeat = 1;
+			for(i = 1; cbuf[i]; i++) {
+				if(isdigit(cbuf[i])) {
+					sscanf(&cbuf[i], "%d", &repeat);
+				}	
+			}
+			executeNext(instArr, iCount, repeat);
 			break;
 		case 'r':
+			repeat = 1;
+			while(1) {
+				executeNext(instArr, iCount, repeat);
+			}
 			break;
 		case 'm':
 			break;
@@ -63,6 +102,7 @@ int main(int argc, char **argv) {
 			zeroCPU();
 			break;
 		case 'q':
+			exit(0);
 			break;
 		default:
 			fprintf(stdout, "Invalid command\n");

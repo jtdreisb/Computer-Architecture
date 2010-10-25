@@ -10,19 +10,6 @@ typedef struct {
 
 static MIPS_CPU *cpu = NULL;
 
-void initMIPS () {
-	if(!cpu) {
-		cpu = malloc(sizeof(MIPS_CPU));
-		if(!cpu) {
-			perror("getCPU");
-			exit(1);
-		}
-		zeroCPU();
-	} else {
-		fprintf(stderr, "CPU is already RUNNING");
-	}
-}
-
 
 
 INST_STRUCT *parseRType(char *code);
@@ -45,10 +32,26 @@ int doJ(char *code);
 int doJr(char *code);
 int doJal(char *code);
 
+
+void initMIPS () {
+	if(!cpu) {
+		cpu = malloc(sizeof(*cpu));
+		if(!cpu) {
+			perror("getCPU");
+			exit(1);
+		}
+		zeroCPU();
+	} else {
+		fprintf(stderr, "CPU is already RUNNING");
+	}
+}
+
+
 int execute(char *code) {
-	if(!code && (strlen(code) != 32)) {
+
+	if(!code || (strlen(code) != 32)) {
 		fprintf(stderr, "INVALID INSTRUCTION: EXECUTE\n");
-		exit(1);
+		return 1;
 	}
 	if(executeInstruction(code)) {
 		fprintf(stderr, "ERROR: executing \n\t%s\n",code);
@@ -56,9 +59,23 @@ int execute(char *code) {
 	return 0;
 }
 
+int executeNext(char ** instArr, int maxPC, int repeat) {
+	int i;
+	for(i = 0; i < repeat; i++) {
+		if(cpu->pc == maxPC) {
+			fprintf(stdout, "Reached end of executable");
+			exit(0);
+		}
+		if(execute(instArr[cpu->pc])) {
+			fprintf(stderr, "bad instruction");
+		}
+	}
+	fprintf(stdout, "\t Executed %d instruction\n", i);
+	return 0;
+}	
+
 void dumpRegs() {
 	fprintf(stdout,
-			"\n\n"
 			"pc = %d\n"
 			"$0 = %d\t$v0 = %d\t$v1 = %d\t$a0 = %d\n"
 			"$a1 = %d\t$a2 = %d\t$a3 = %d\t$t0 = %d\n"
@@ -108,38 +125,48 @@ void zeroCPU() {
 int executeInstruction(char *code) {
 	int ret;
 	/* and, or, add, addi, sub, slt, beq, bne, lw, sw, j, jr, jal */
-	if(strncmp(code, "000000", 6)) {
+	if(!strncmp(code, "000000", 6)) {
 		/* add or and sub slt jr */
-		if(strncmp(&code[26], "100000", 6)) {
+		if(!strncmp(&code[26], "100000", 6)) {
 			/* add */
 			ret = doAdd(code);
-		} else if(strncmp(&code[26], "100101", 6)) {
+		} else if(!strncmp(&code[26], "100101", 6)) {
 			/* or */
 			ret = doOr(code);
-		} else if(strncmp(&code[26], "100100", 6)) {
+		} else if(!strncmp(&code[26], "100100", 6)) {
 			/* and */
 			ret = doAnd(code);
-		} else if(strncmp(&code[26], "100010", 6)) {
+		} else if(!strncmp(&code[26], "100010", 6)) {
 			/* sub */
-		} else if(strncmp(&code[26], "101010", 6)) {
+			ret = doSub(code);
+		} else if(!strncmp(&code[26], "101010", 6)) {
 			/* slt */
-		} else if(strncmp(&code[26], "001000", 6)) {
+			ret = doSlt(code);
+		} else if(!strncmp(&code[26], "001000", 6)) {
 			/* jr */
+			ret = doJr(code);
 		}
-	} else if(strncmp(code , "001000", 6)) {
+	} else if(!strncmp(code , "001000", 6)) {
 		/* addi */
-	} else if(strncmp(code , "000100", 6)) {
+		ret = doAddi(code);
+	} else if(!strncmp(code , "000100", 6)) {
 		/* beq */
-	} else if(strncmp(code , "000101", 6)) {
+		ret = doBeq(code);
+	} else if(!strncmp(code , "000101", 6)) {
 		/* bne */
-	} else if(strncmp(code , "100011", 6)) {
+		ret = doBne(code);
+	} else if(!strncmp(code , "100011", 6)) {
 		/* lw */
-	} else if(strncmp(code , "101011", 6)) {
+		ret = doLw(code);
+	} else if(!strncmp(code , "101011", 6)) {
 		/* sw */
-	} else if(strncmp(code , "000010", 6)) {
+		ret = doSw(code);
+	} else if(!strncmp(code , "000010", 6)) {
 		/* j */
-	} else if(strncmp(code , "000011", 6)) {
+		ret = doJ(code);
+	} else if(!strncmp(code , "000011", 6)) {
 		/* jal */
+		ret = doJal(code);
 	} else {
 		fprintf(stderr, "INVALID OPCODE\n");
 		exit(1);
@@ -157,6 +184,7 @@ int doAdd(char *code) {
 		return 1;
 	}
 	cpu->reg[inst->rd] = cpu->reg[inst->rs] + cpu->reg[inst->rt];
+	cpu->pc++;
 	return 0;
 }
 int doOr(char *code) {
@@ -167,6 +195,7 @@ int doOr(char *code) {
 		return 1;
 	}
 	cpu->reg[inst->rd] = cpu->reg[inst->rs] | cpu->reg[inst->rt];
+	cpu->pc++;
 	return 0;
 }
 int doAnd(char *code) {
@@ -176,6 +205,7 @@ int doAnd(char *code) {
 		return 1;
 	}
 	cpu->reg[inst->rd] = cpu->reg[inst->rs] & cpu->reg[inst->rt];
+	cpu->pc++;
 	return 0;
 }
 int doAddi(char *code) {
@@ -184,7 +214,8 @@ int doAddi(char *code) {
 	if(!cpu || !inst) {
 		return 1;
 	}
-	cpu->reg[inst->rd] = cpu->reg[inst->rs] + inst->imm;
+	cpu->reg[inst->rt] = cpu->reg[inst->rs] + inst->imm;
+	cpu->pc++;
 	return 0;
 }
 int doSub(char *code) {
@@ -194,6 +225,7 @@ int doSub(char *code) {
 		return 1;
 	}
 	cpu->reg[inst->rd] = cpu->reg[inst->rs] - cpu->reg[inst->rt];
+	cpu->pc++;
 	return 0;
 }
 int doSlt(char *code) {
@@ -203,6 +235,7 @@ int doSlt(char *code) {
 		return 1;
 	}
 	cpu->reg[inst->rd] = cpu->reg[inst->rs] < cpu->reg[inst->rt];
+	cpu->pc++;
 	return 0;
 }
 int doBeq(char *code) {
@@ -213,6 +246,8 @@ int doBeq(char *code) {
 	}
 	if( cpu->reg[inst->rs] == cpu->reg[inst->rt] ) {
 		cpu->pc += inst->imm;
+	} else {
+		cpu->pc++;
 	}
 	return 0;
 }
@@ -224,6 +259,8 @@ int doBne(char *code) {
 	}
 	if( cpu->reg[inst->rs] != cpu->reg[inst->rt] ) {
 		cpu->pc += inst->imm;
+	} else {
+		cpu->pc++;
 	}
 
 	return 0;
@@ -237,6 +274,7 @@ int doLw(char *code) {
 	}
 	addr = inst->rs + inst->imm;
 	cpu->reg[inst->rt] = cpu->dmem[addr];
+	cpu->pc++;
 	return 0;
 }
 int doSw(char *code) {
@@ -248,6 +286,7 @@ int doSw(char *code) {
 	}
 	addr = inst->rs + inst->imm;
 	cpu->dmem[addr] = cpu->reg[inst->rt];
+	cpu->pc++;
 	return 0;
 }
 int doJ(char *code) {

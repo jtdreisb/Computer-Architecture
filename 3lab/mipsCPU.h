@@ -43,3 +43,4 @@ void initMIPS ();
 int execute(char *code);
 void dumpRegs();
 void zeroCPU();
+int executeNext(char ** instArr, int maxPC, int repeat);

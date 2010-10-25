@@ -2,7 +2,7 @@ CC = gcc
 
 CFLAGS = -ansi -pedantic -Wall -g 
 
-LDFLAGS = 
+LDFLAGS =  
 
 TARGET = lab3
 

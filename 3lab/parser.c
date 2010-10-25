@@ -9,8 +9,8 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-
 #include "parser.h"
+#include "mipsCPU.h"
 
 
 typedef struct { 
@@ -27,20 +27,24 @@ void generate(FILE *fp, char ** instArr, Label **lArr);
 
 
 
-char **parse(char *f_in, char *f_out) {
+void parse(char *f_in, char *f_out) {
 	FILE *f_asm;
 	FILE *f_mach;
 	char *buf;
 	int line = 0;	
 	int buf_size = BUFSIZE;
-	char ** instArr;
-
+	char ** instArr = NULL;
 	Label ** lArr;
 	buf = malloc(buf_size * sizeof(char));
-	
+
+	if(!buf) {
+		/* Check errno*/
+		perror("parse");
+		exit(1);
+	}
 	
 	f_asm = fopen(f_in, "r");	
-
+	
 	if(!f_asm) {
 		/* Check errno*/
 		perror("Couldn't open file");
@@ -60,33 +64,16 @@ char **parse(char *f_in, char *f_out) {
 		line++;
 	}	
 	
-	/*
-	 * printf("---- Valid Instructions ----\n");
-	i = 0;
-	while(instArr[i]) {
-		printf("%d: %s\n", i, instArr[i]);
-		i++;
-	}
-	printf("---- Valid Labels ----\n");
-	*/
 	lArr = getLabelArr(0);
-	/*if(lArr) {
-		i = 0;
-		while(lArr[i]) {
-			printf("%d: %s\n", lArr[i]->line, lArr[i]->name); 
-			i++;
-		}	
-	}*/
-
+	
 	generate(f_mach, instArr, lArr);
 
-	free(instArr);
 	free(buf);
-
+	free(instArr);
 	fclose(f_asm);
 	fclose(f_mach);
 
-	return instArr;
+	return;
 }
 
 Label ** getLabelArr(int elements) {
@@ -246,26 +233,32 @@ char ** parseLine(char *line) {
  */
 char * getLine(char *buf, int *size, FILE *fp) {
 	char *line = buf;
-	int i;
-	for( i=0; (line[i] = getc(fp)) != EOF && line[i] != '\n';  i++ ) {
-		if( i == (*size -1)) {
+	int i, c;
+	fprintf(stdout, "\n1\n");
+	for( i=0; ((c = getc(fp)) != EOF) && ((char) c != '\n');  i++ ) {
+		if( i == (*size )) {
+			dumpRegs();
 			*size = *size * 2;
 			line = realloc(line, *size);
 			if(!line) {
 				perror("getLine: Realloc");
 				exit(1);
 			}
+			dumpRegs();
 		}
+		line[i] = (char)c;
 	}
-	if(line[i] == '\n' ) {
+	dumpRegs();
+	fprintf(stdout, "2\n");
+	if(c == '\n' ) {
 		line[i] = '\0';
-	} else if (line[i] == EOF) {
+	} else if (c == EOF) {
 		return NULL;
 	} else {
 		printf("Error: line[i] = %c" , line[i]);
 		exit(1);
 	}
-
+	fprintf(stdout, "3\n");
 	return line;
 }
 /*
@@ -656,23 +649,23 @@ void parseInstruction(FILE * fp, const char * instruction, int insIndex, Label *
 		for(i=0;i < 6;i++) {
 			fprintf(fp, "%c",code[i]);
 		}
-		fprintf(fp, " ");
+		
 		for(;i < 11; i++) {
 			fprintf(fp, "%c", code[i]);
 		}
-		fprintf(fp, " ");
+		
 		for(;i < 16; i++) {
 			fprintf(fp, "%c", code[i]);
 		}
-		fprintf(fp, " ");
+		
 		for(;i < 21; i++) {
 			fprintf(fp, "%c", code[i]);
 		}
-		fprintf(fp, " ");
+		
 		for(;i < 26; i++) {
 			fprintf(fp, "%c", code[i]);
 		}
-		fprintf(fp, " ");
+		
 		for(;i < INST_SIZE; i++) {
 			fprintf(fp, "%c", code[i]);
 		}
@@ -681,15 +674,15 @@ void parseInstruction(FILE * fp, const char * instruction, int insIndex, Label *
 		for(i=0;i < 6;i++) {
 			fprintf(fp, "%c",code[i]);
 		}
-		fprintf(fp, " ");
+		
 		for(;i < 11; i++) {
 			fprintf(fp, "%c", code[i]);
 		}
-		fprintf(fp, " ");
+		
 		for(;i < 16; i++) {
 			fprintf(fp, "%c", code[i]);
 		}
-		fprintf(fp, " ");
+		
 		for(;i < INST_SIZE; i++) {
 			fprintf(fp, "%c", code[i]);
 		}
@@ -698,15 +691,15 @@ void parseInstruction(FILE * fp, const char * instruction, int insIndex, Label *
 		for(i=0;i < 6;i++) {
 			fprintf(fp, "%c",code[i]);
 		}
-		fprintf(fp, " ");
+		
 		for(;i < 11; i++) {
 			fprintf(fp, "%c", code[i]);
 		}
-		fprintf(fp, " ");
+		
 		for(;i < 26; i++) {
 			fprintf(fp, "%c", code[i]);
 		}
-		fprintf(fp, " ");
+		
 		for(;i < INST_SIZE; i++) {
 			fprintf(fp, "%c", code[i]);
 		}
@@ -715,11 +708,11 @@ void parseInstruction(FILE * fp, const char * instruction, int insIndex, Label *
 		for(i=0;i < 6;i++) {
 			fprintf(fp, "%c",code[i]);
 		}
-		fprintf(fp, " ");
+		
 		for(;i < INST_SIZE; i++) {
 			fprintf(fp, "%c", code[i]);
 		}
-		fprintf(fp, " ");
+		
 
 		fprintf(fp,"\n");
 	} else {
