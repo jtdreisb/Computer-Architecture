@@ -61,17 +61,17 @@ int execute(char *code) {
 
 int executeNext(char ** instArr, int maxPC, int repeat) {
 	int i;
-	for(i = 0; i < repeat; i++) {
-		if(cpu->pc == maxPC) {
-			fprintf(stdout, "Reached end of executable\n");
-			dumpRegs();
-			exit(0);
-		}
+	for(i = 0; i <= repeat; i++) {
 		if(execute(instArr[cpu->pc])) {
 			fprintf(stderr, "bad instruction");
 		}
+		if(cpu->pc == maxPC+1) {
+			fprintf(stdout, "Reached end of executable\n");
+			return 1;
+		}
+		
 	}
-	fprintf(stdout, "\t Executed %d instruction\n", i);
+	fprintf(stdout, "\t Executed %d instruction(s)\n", i);
 	return 0;
 }	
 
@@ -126,46 +126,46 @@ void zeroCPU() {
 int executeInstruction(char *code) {
 	int ret;
 	/* and, or, add, addi, sub, slt, beq, bne, lw, sw, j, jr, jal */
-	if(!strncmp(code, "000000", 6)) {
+	if(strncmp(code, "000000", 6) == 0) {
 		/* add or and sub slt jr */
-		if(!strncmp(&code[26], "100000", 6)) {
+		if(strncmp(&code[26], "100000", 6) == 0) {
 			/* add */
 			ret = doAdd(code);
-		} else if(!strncmp(&code[26], "100101", 6)) {
+		} else if(strncmp(&code[26], "100101", 6) == 0) {
 			/* or */
 			ret = doOr(code);
-		} else if(!strncmp(&code[26], "100100", 6)) {
+		} else if(strncmp(&code[26], "100100", 6) == 0) {
 			/* and */
 			ret = doAnd(code);
-		} else if(!strncmp(&code[26], "100010", 6)) {
+		} else if(strncmp(&code[26], "100010", 6) == 0) {
 			/* sub */
 			ret = doSub(code);
-		} else if(!strncmp(&code[26], "101010", 6)) {
+		} else if(strncmp(&code[26], "101010", 6) == 0) {
 			/* slt */
 			ret = doSlt(code);
-		} else if(!strncmp(&code[26], "001000", 6)) {
+		} else if(strncmp(&code[26], "001000", 6) == 0) {
 			/* jr */
 			ret = doJr(code);
 		}
-	} else if(!strncmp(code , "001000", 6)) {
+	} else if(strncmp(code , "001000", 6) == 0) {
 		/* addi */
 		ret = doAddi(code);
-	} else if(!strncmp(code , "000100", 6)) {
+	} else if(strncmp(code , "000100", 6) == 0) {
 		/* beq */
 		ret = doBeq(code);
-	} else if(!strncmp(code , "000101", 6)) {
+	} else if(strncmp(code , "000101", 6) == 0) {
 		/* bne */
 		ret = doBne(code);
-	} else if(!strncmp(code , "100011", 6)) {
+	} else if(strncmp(code , "100011", 6) == 0) {
 		/* lw */
 		ret = doLw(code);
-	} else if(!strncmp(code , "101011", 6)) {
+	} else if(strncmp(code , "101011", 6) == 0) {
 		/* sw */
 		ret = doSw(code);
-	} else if(!strncmp(code , "000010", 6)) {
+	} else if(strncmp(code , "000010", 6) == 0) {
 		/* j */
 		ret = doJ(code);
-	} else if(!strncmp(code , "000011", 6)) {
+	} else if(strncmp(code , "000011", 6) == 0) {
 		/* jal */
 		ret = doJal(code);
 	} else {
@@ -266,11 +266,9 @@ int doBne(char *code) {
 		return 1;
 	}
 	if( cpu->reg[inst->rs] != cpu->reg[inst->rt] ) {
-		cpu->pc = inst->imm;
-	} else {
-		cpu->pc++;
+		cpu->pc += inst->imm;
 	}
-	fprintf(stderr, "pc == %d\nimm == %d\n", cpu->pc,inst->imm);
+	cpu->pc++;
 	free(inst);	
 	return 0;
 }
@@ -421,9 +419,7 @@ INST_STRUCT *parseIType(char *code) {
 	if(*p == '1') {
 		temp |= 0xFFFF0000;
 	}
-	fprintf(stderr,"\n%x\n",temp);
 	temp = temp >> 1; /* account for overshift */
-	fprintf(stderr, "%x\n",temp);
 	inst->imm = temp;
 
 	return inst;

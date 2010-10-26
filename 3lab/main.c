@@ -105,9 +105,8 @@ int main(int argc, char **argv) {
 			break;
 		case 'r':
 			repeat = 1;
-			while(1) {
-				executeNext(instArr, iCount, repeat);
-			}
+			while(!executeNext(instArr, iCount, repeat));
+				
 			break;
 		case 'm':
 			break;
@@ -115,6 +114,7 @@ int main(int argc, char **argv) {
 			zeroCPU();
 			break;
 		case 'q':
+			fprintf(stdout,"\n");
 			exit(0);
 			break;
 		default:
