@@ -10,7 +10,6 @@
 #include <ctype.h>
 #include <string.h>
 #include "parser.h"
-#include "mipsCPU.h"
 
 
 typedef struct { 
@@ -234,31 +233,27 @@ char ** parseLine(char *line) {
 char * getLine(char *buf, int *size, FILE *fp) {
 	char *line = buf;
 	int i, c;
-	fprintf(stdout, "\n1\n");
 	for( i=0; ((c = getc(fp)) != EOF) && ((char) c != '\n');  i++ ) {
 		if( i == (*size )) {
-			dumpRegs();
 			*size = *size * 2;
 			line = realloc(line, *size);
 			if(!line) {
 				perror("getLine: Realloc");
 				exit(1);
 			}
-			dumpRegs();
 		}
 		line[i] = (char)c;
 	}
-	dumpRegs();
-	fprintf(stdout, "2\n");
 	if(c == '\n' ) {
 		line[i] = '\0';
 	} else if (c == EOF) {
+		free(buf);
+		*size = BUFSIZE;
 		return NULL;
 	} else {
 		printf("Error: line[i] = %c" , line[i]);
 		exit(1);
 	}
-	fprintf(stdout, "3\n");
 	return line;
 }
 /*

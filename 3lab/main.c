@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <string.h>
 #include "parser.h"
 #include "mipsCPU.h"
 
@@ -65,11 +66,23 @@ int main(int argc, char **argv) {
 				exit(1);
 			}
 		}
-		fprintf(stdout, "%d: ", i);
-		instArr[i++] = getLine(cbuf, &cbuf_size, i_fp);	
-		fprintf(stdout, "%s\n", instArr[i-1]);
+		cbuf = getLine(cbuf, &cbuf_size, i_fp);	
+		if(!cbuf) {
+			break;
+		}	
+		instArr[i] = malloc(strlen(cbuf) * sizeof(char));
+		if(!instArr[i]) {
+			perror("main");
+			exit(1);
+		}
+		strcpy(instArr[i++],cbuf); 
 	}
 	iCount = i-1;
+	cbuf = malloc(cbuf_size);
+	if(!cbuf){
+		perror("mallocing bufs");
+		exit(1);
+	}
 
 	while(!feof(c_fp)){
 		fprintf(stdout, "mips> ");

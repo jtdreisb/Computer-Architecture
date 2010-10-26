@@ -63,7 +63,8 @@ int executeNext(char ** instArr, int maxPC, int repeat) {
 	int i;
 	for(i = 0; i < repeat; i++) {
 		if(cpu->pc == maxPC) {
-			fprintf(stdout, "Reached end of executable");
+			fprintf(stdout, "Reached end of executable\n");
+			dumpRegs();
 			exit(0);
 		}
 		if(execute(instArr[cpu->pc])) {
@@ -185,6 +186,7 @@ int doAdd(char *code) {
 	}
 	cpu->reg[inst->rd] = cpu->reg[inst->rs] + cpu->reg[inst->rt];
 	cpu->pc++;
+	free(inst);	
 	return 0;
 }
 int doOr(char *code) {
@@ -196,6 +198,7 @@ int doOr(char *code) {
 	}
 	cpu->reg[inst->rd] = cpu->reg[inst->rs] | cpu->reg[inst->rt];
 	cpu->pc++;
+	free(inst);	
 	return 0;
 }
 int doAnd(char *code) {
@@ -206,6 +209,7 @@ int doAnd(char *code) {
 	}
 	cpu->reg[inst->rd] = cpu->reg[inst->rs] & cpu->reg[inst->rt];
 	cpu->pc++;
+	free(inst);	
 	return 0;
 }
 int doAddi(char *code) {
@@ -216,6 +220,7 @@ int doAddi(char *code) {
 	}
 	cpu->reg[inst->rt] = cpu->reg[inst->rs] + inst->imm;
 	cpu->pc++;
+	free(inst);	
 	return 0;
 }
 int doSub(char *code) {
@@ -226,6 +231,7 @@ int doSub(char *code) {
 	}
 	cpu->reg[inst->rd] = cpu->reg[inst->rs] - cpu->reg[inst->rt];
 	cpu->pc++;
+	free(inst);	
 	return 0;
 }
 int doSlt(char *code) {
@@ -236,6 +242,7 @@ int doSlt(char *code) {
 	}
 	cpu->reg[inst->rd] = cpu->reg[inst->rs] < cpu->reg[inst->rt];
 	cpu->pc++;
+	free(inst);	
 	return 0;
 }
 int doBeq(char *code) {
@@ -245,10 +252,11 @@ int doBeq(char *code) {
 		return 1;
 	}
 	if( cpu->reg[inst->rs] == cpu->reg[inst->rt] ) {
-		cpu->pc += inst->imm;
+		cpu->pc = inst->imm;
 	} else {
 		cpu->pc++;
 	}
+	free(inst);	
 	return 0;
 }
 int doBne(char *code) {
@@ -258,11 +266,12 @@ int doBne(char *code) {
 		return 1;
 	}
 	if( cpu->reg[inst->rs] != cpu->reg[inst->rt] ) {
-		cpu->pc += inst->imm;
+		cpu->pc = inst->imm;
 	} else {
 		cpu->pc++;
 	}
-
+	fprintf(stderr, "pc == %d\nimm == %d\n", cpu->pc,inst->imm);
+	free(inst);	
 	return 0;
 }
 int doLw(char *code) {
@@ -275,6 +284,7 @@ int doLw(char *code) {
 	addr = inst->rs + inst->imm;
 	cpu->reg[inst->rt] = cpu->dmem[addr];
 	cpu->pc++;
+	free(inst);	
 	return 0;
 }
 int doSw(char *code) {
@@ -287,6 +297,7 @@ int doSw(char *code) {
 	addr = inst->rs + inst->imm;
 	cpu->dmem[addr] = cpu->reg[inst->rt];
 	cpu->pc++;
+	free(inst);	
 	return 0;
 }
 int doJ(char *code) {
@@ -296,6 +307,7 @@ int doJ(char *code) {
 		return 1;
 	}
 	cpu->pc = inst->imm;
+	free(inst);	
 	return 0;
 }
 int doJr(char *code) {
@@ -305,6 +317,7 @@ int doJr(char *code) {
 		return 1;
 	}
 	cpu->pc = inst->rs;
+	free(inst);	
 	return 0;
 }
 int doJal(char *code) {
@@ -315,6 +328,7 @@ int doJal(char *code) {
 	}
 	cpu->reg[REG_RA] = cpu->pc + 4;
 	cpu->pc = inst->imm;
+	free(inst);	
 	return 0;
 }
 
@@ -399,16 +413,17 @@ INST_STRUCT *parseIType(char *code) {
 	/* imm */
 	temp = 0;
 	for(i=0;i<16;i++) {
-		if(*p == '1') {
-			if(i==0){
-				temp &= 0xFFFF0000;	
-			}
+		if(p[i] == '1') {
 			temp++;  	
 		}
 		temp = temp << 1;
-		p++;	
 	}	
+	if(*p == '1') {
+		temp |= 0xFFFF0000;
+	}
+	fprintf(stderr,"\n%x\n",temp);
 	temp = temp >> 1; /* account for overshift */
+	fprintf(stderr, "%x\n",temp);
 	inst->imm = temp;
 
 	return inst;
