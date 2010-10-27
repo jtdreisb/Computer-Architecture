@@ -1,4 +1,9 @@
-
+/*
+ * Jason Dreisbach
+ * Matt Duhon
+ *
+ * mipsCPU.h
+ */
 /* REGISTER DEFINITIONS */
 typedef enum {
 	 REG_ZERO = 0,

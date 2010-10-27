@@ -1,4 +1,7 @@
 /*
+ * Jason Dreisbach
+ * Matt Duhon
+ *
  * Mips CPU c file
  *
  * contains all logic for mips cpu
