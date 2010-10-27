@@ -23,6 +23,7 @@ int main(int argc, char **argv) {
 	int ibuf_size = BUFSIZE;
 	char **instArr;
 	int i, repeat, iCount;
+	int first, last;
 
    	char *cbuf = malloc(cbuf_size);
 	if(!cbuf){
@@ -60,6 +61,7 @@ int main(int argc, char **argv) {
 	while(!feof(i_fp)) {
 		if(i == ibuf_size) {
 			ibuf_size = ibuf_size + BUFSIZE;
+			fprintf(stderr, "\n BUFSIZE IS %d\n", ibuf_size);
 			instArr = realloc(instArr, ibuf_size);
 			if(!instArr) {
 				perror("realloc instArr");
@@ -85,7 +87,7 @@ int main(int argc, char **argv) {
 	}
 
 	while(!feof(c_fp)){
-		fprintf(stdout, "mips> ");
+		fprintf(stdout, "\nmips> ");
 		cbuf = getLine(cbuf, &cbuf_size, c_fp);
 		switch(cbuf[0]) {	
 		case 'h':
@@ -99,19 +101,36 @@ int main(int argc, char **argv) {
 			for(i = 1; cbuf[i]; i++) {
 				if(isdigit(cbuf[i])) {
 					sscanf(&cbuf[i], "%d", &repeat);
+					break;
 				}	
 			}
 			executeNext(instArr, iCount, repeat);
 			break;
 		case 'r':
-			repeat = 1;
-			while(!executeNext(instArr, iCount, repeat));
-				
+			repeat = -1;
+			executeNext(instArr, iCount, repeat);
 			break;
 		case 'm':
+			for(i=1; cbuf[i]; i++) {
+				if(isdigit(cbuf[i])) {
+					sscanf(&cbuf[i], "%d", &first);
+					break;
+				}
+			}
+			while(isdigit(cbuf[i])) {
+				i++;
+			}
+			for(; cbuf[i]; i++) {
+				if(isdigit(cbuf[i])) {
+					sscanf(&cbuf[i], "%d", &last);
+					break;
+				}
+			}
+			printMem(first, last);
 			break;
 		case 'c':
 			zeroCPU();
+			fprintf(stdout,"\n\tSimulator reset\n");
 			break;
 		case 'q':
 			fprintf(stdout,"\n");

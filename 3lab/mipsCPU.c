@@ -1,7 +1,17 @@
+/*
+ * Mips CPU c file
+ *
+ * contains all logic for mips cpu
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "mipsCPU.h"
+
+#define DEBUG
+
+#undef DEBUG
 
 typedef struct {
 	int rs,rt,rd;
@@ -32,6 +42,11 @@ int doJ(char *code);
 int doJr(char *code);
 int doJal(char *code);
 
+void printMem(int from, int to) {
+	for(; from <= to; from++) {
+		fprintf(stdout, "[%d] = %d\n", from, cpu->dmem[from]);
+	}
+}
 
 void initMIPS () {
 	if(!cpu) {
@@ -60,24 +75,31 @@ int execute(char *code) {
 }
 
 int executeNext(char ** instArr, int maxPC, int repeat) {
-	int i;
-	for(i = 0; i <= repeat; i++) {
-		if(execute(instArr[cpu->pc])) {
-			fprintf(stderr, "bad instruction");
+	int i = 0;
+	if(repeat == -1) {
+		while(cpu->pc < maxPC+1) {
+				execute(instArr[cpu->pc]);
+				i++;
 		}
-		if(cpu->pc == maxPC+1) {
-			fprintf(stdout, "Reached end of executable\n");
-			return 1;
+	} else {
+		for(i = 0; i < repeat; i++) {
+			if(execute(instArr[cpu->pc])) {
+				fprintf(stderr, "bad instruction");
+			}
+			if(cpu->pc > maxPC) {
+				fprintf(stdout, "Reached end of executable\n");
+				return 1;
+			}
+			
 		}
-		
+		fprintf(stdout, "\n\t%d instruction(s) executed\n", i);
 	}
-	fprintf(stdout, "\t Executed %d instruction(s)\n", i);
 	return 0;
 }	
 
 void dumpRegs() {
 	fprintf(stdout,
-			"pc = %d\n"
+			"\npc = %d\n"
 			"$0 = %d\t$v0 = %d\t$v1 = %d\t$a0 = %d\n"
 			"$a1 = %d\t$a2 = %d\t$a3 = %d\t$t0 = %d\n"
 			"$t1 = %d\t$t2 = %d\t$t3 = %d\t$t4 = %d\n"
@@ -184,11 +206,21 @@ int doAdd(char *code) {
 	if(!cpu || !inst) {
 		return 1;
 	}
+#ifdef DEBUG
+	fprintf(stderr, "add %d+%d= reg[%d]", cpu->reg[inst->rs], 
+								cpu->reg[inst->rt], inst->rd);
+	fprintf(stderr,"\n");
+#endif
 	cpu->reg[inst->rd] = cpu->reg[inst->rs] + cpu->reg[inst->rt];
 	cpu->pc++;
 	free(inst);	
 	return 0;
 }
+
+/* 
+ * doOr
+ *
+ */
 int doOr(char *code) {
 	INST_STRUCT *inst;
 
@@ -196,6 +228,11 @@ int doOr(char *code) {
 	if(!cpu || !inst) {
 		return 1;
 	}
+#ifdef DEBUG
+	fprintf(stderr, "OR %x|%x= reg[%d]", cpu->reg[inst->rs], 
+								cpu->reg[inst->rt], inst->rd);
+	fprintf(stderr,"\n");
+#endif
 	cpu->reg[inst->rd] = cpu->reg[inst->rs] | cpu->reg[inst->rt];
 	cpu->pc++;
 	free(inst);	
@@ -207,6 +244,11 @@ int doAnd(char *code) {
 	if(!cpu || !inst) {
 		return 1;
 	}
+#ifdef DEBUG
+	fprintf(stderr, "and %x&%x= reg[%d]", cpu->reg[inst->rs], 
+								cpu->reg[inst->rt], inst->rd);
+	fprintf(stderr,"\n");
+#endif
 	cpu->reg[inst->rd] = cpu->reg[inst->rs] & cpu->reg[inst->rt];
 	cpu->pc++;
 	free(inst);	
@@ -218,6 +260,15 @@ int doAddi(char *code) {
 	if(!cpu || !inst) {
 		return 1;
 	}
+#ifdef DEBUG
+	fprintf(stderr, "addi %d+%d= reg[%d]\n", cpu->reg[inst->rs], 
+								inst->imm, inst->rt);
+	/*fprintf(stderr, "rs = %d\nrt=%d\nimm=%d",
+					inst->rs, inst->rt,
+					inst->imm);
+*/
+	fprintf(stderr,"\n");
+#endif
 	cpu->reg[inst->rt] = cpu->reg[inst->rs] + inst->imm;
 	cpu->pc++;
 	free(inst);	
@@ -229,6 +280,11 @@ int doSub(char *code) {
 	if(!cpu || !inst) {
 		return 1;
 	}
+#ifdef DEBUG
+	fprintf(stderr, "sub %d-%d= reg[%d]", cpu->reg[inst->rs], 
+								cpu->reg[inst->rt], inst->rd);
+	fprintf(stderr,"\n");
+#endif
 	cpu->reg[inst->rd] = cpu->reg[inst->rs] - cpu->reg[inst->rt];
 	cpu->pc++;
 	free(inst);	
@@ -240,7 +296,12 @@ int doSlt(char *code) {
 	if(!cpu || !inst) {
 		return 1;
 	}
-	cpu->reg[inst->rd] = cpu->reg[inst->rs] < cpu->reg[inst->rt];
+#ifdef DEBUG
+	fprintf(stderr, "if %d<%d= reg[%d]", cpu->reg[inst->rs], 
+								cpu->reg[inst->rt], inst->rd);
+	fprintf(stderr,"\n");
+#endif
+	cpu->reg[inst->rd] = cpu->reg[inst->rt] < cpu->reg[inst->rs];
 	cpu->pc++;
 	free(inst);	
 	return 0;
@@ -251,6 +312,11 @@ int doBeq(char *code) {
 	if(!cpu || !inst) {
 		return 1;
 	}
+#ifdef DEBUG
+	fprintf(stderr, "beq %d==%d then pc = %d", cpu->reg[inst->rs], 
+								cpu->reg[inst->rt], inst->imm);
+	fprintf(stderr,"\n");
+#endif
 	if( cpu->reg[inst->rs] == cpu->reg[inst->rt] ) {
 		cpu->pc = inst->imm;
 	} else {
@@ -265,6 +331,11 @@ int doBne(char *code) {
 	if(!cpu || !inst) {
 		return 1;
 	}
+#ifdef DEBUG
+	fprintf(stderr, "bne %d!=%d then pc = %d", cpu->reg[inst->rs], 
+								cpu->reg[inst->rt], inst->imm);
+	fprintf(stderr,"bne\n");
+#endif
 	if( cpu->reg[inst->rs] != cpu->reg[inst->rt] ) {
 		cpu->pc += inst->imm;
 	}
@@ -279,8 +350,15 @@ int doLw(char *code) {
 	if(!cpu || !inst) {
 		return 1;
 	}
-	addr = inst->rs + inst->imm;
-	cpu->reg[inst->rt] = cpu->dmem[addr];
+#ifdef DEBUG
+/*	fprintf(stderr, "lw\nrs = %d\nrt=%d\nimm=%d\n",
+					inst->rs, inst->rt,
+					inst->imm);
+*/
+	fprintf(stderr,"\n");
+#endif
+	addr = cpu->reg[inst->rt] + inst->imm;
+	cpu->reg[inst->rs] = cpu->dmem[addr];
 	cpu->pc++;
 	free(inst);	
 	return 0;
@@ -292,8 +370,15 @@ int doSw(char *code) {
 	if(!cpu || !inst) {
 		return 1;
 	}
-	addr = inst->rs + inst->imm;
-	cpu->dmem[addr] = cpu->reg[inst->rt];
+#ifdef DEBUG
+	fprintf(stderr,"sw\n");
+/*	fprintf(stderr, "rs = %d\nrt=%d\nimm=%d",
+					inst->rs, inst->rt,
+					inst->imm);
+					*/
+#endif
+	addr = cpu->reg[inst->rt] + inst->imm;
+	cpu->dmem[addr] = cpu->reg[inst->rs];
 	cpu->pc++;
 	free(inst);	
 	return 0;
@@ -304,6 +389,10 @@ int doJ(char *code) {
 	if(!cpu || !inst) {
 		return 1;
 	}
+#ifdef DEBUG
+	fprintf(stderr, "j pc = %d", inst->imm); 
+	fprintf(stderr,"\n");
+#endif
 	cpu->pc = inst->imm;
 	free(inst);	
 	return 0;
@@ -314,17 +403,30 @@ int doJr(char *code) {
 	if(!cpu || !inst) {
 		return 1;
 	}
-	cpu->pc = inst->rs;
+#ifdef DEBUG
+	fprintf(stderr, "jr = %d", cpu->reg[inst->rt]); 
+	fprintf(stderr,"\n");
+#endif
+
+	cpu->pc = cpu->reg[inst->rt];
 	free(inst);	
 	return 0;
 }
+/*
+ * doJal()
+ *
+ */
 int doJal(char *code) {
 	INST_STRUCT *inst;
-	inst = parseJType(code);
+	inst = parseIType(code);
 	if(!cpu || !inst) {
 		return 1;
 	}
-	cpu->reg[REG_RA] = cpu->pc + 4;
+#ifdef DEBUG
+	fprintf(stderr, "jal = %d",inst->imm ); 
+	fprintf(stderr,"\n");
+#endif
+	cpu->reg[REG_RA] = cpu->pc + 1;
 	cpu->pc = inst->imm;
 	free(inst);	
 	return 0;
@@ -339,19 +441,7 @@ INST_STRUCT *parseRType(char *code) {
 		perror("parseRType");
 		exit(1);
 	}
-	p = code + 6;	/* rs */
-	for(i=0;i<5;i++) {
-		if(*p == '1') {
-			temp++;  	
-		}
-		temp = temp << 1;
-		p++;	
-	}	
-	temp = temp >> 1; /* account for overshift */
-	inst->rs = temp;
-
-	/* rt */
-	temp = 0;
+	p = code + 6;	/* rt */
 	for(i=0;i<5;i++) {
 		if(*p == '1') {
 			temp++;  	
@@ -361,6 +451,18 @@ INST_STRUCT *parseRType(char *code) {
 	}	
 	temp = temp >> 1; /* account for overshift */
 	inst->rt = temp;
+
+	/* rs */
+	temp = 0;
+	for(i=0;i<5;i++) {
+		if(*p == '1') {
+			temp++;  	
+		}
+		temp = temp << 1;
+		p++;	
+	}	
+	temp = temp >> 1; /* account for overshift */
+	inst->rs = temp;
 
 	/* rd */
 	temp = 0;
@@ -376,6 +478,7 @@ INST_STRUCT *parseRType(char *code) {
 
 	return inst;
 }
+
 INST_STRUCT *parseIType(char *code) {
 	char *p;
 	int i, temp = 0;	
@@ -385,7 +488,7 @@ INST_STRUCT *parseIType(char *code) {
 		perror("parseIType");
 		exit(1);
 	}
-	p = code + 6;	/* rs */
+	p = code + 6;	/* rt */
 	for(i=0;i<5;i++) {
 		if(*p == '1') {
 			temp++;  	
@@ -394,7 +497,7 @@ INST_STRUCT *parseIType(char *code) {
 		p++;	
 	}	
 	temp = temp >> 1; /* account for overshift */
-	inst->rs = temp;
+	inst->rt = temp;
 
 	/* rt */
 	temp = 0;
@@ -406,7 +509,7 @@ INST_STRUCT *parseIType(char *code) {
 		p++;	
 	}	
 	temp = temp >> 1; /* account for overshift */
-	inst->rt = temp;
+	inst->rs = temp;
 
 	/* imm */
 	temp = 0;

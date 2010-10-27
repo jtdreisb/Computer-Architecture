@@ -6,7 +6,7 @@
  * Lab 3
  */
 
-#define BUFSIZE				10	
+#define BUFSIZE				100
 #define	INST_SIZE			32
 #define	DEFAULT_ARR_SIZE 	10
 
