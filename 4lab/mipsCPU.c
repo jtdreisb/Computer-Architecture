@@ -19,7 +19,6 @@
 static MIPS_CPU *cpu = NULL;
 
 
-
 INST_STRUCT *parseRType(char *code);
 INST_STRUCT *parseIType(char *code);
 INST_STRUCT *parseJType(char *code);
@@ -42,9 +41,9 @@ int doJal(char *code);
 
 
 void write_back();
-void memory();
-int  execute_stage();
-void decode();
+int memory(int sqsh);
+int execute_stage(int sqsh);
+int decode();
 
 void printMem(int from, int to) {
 	for(; from <= to; from++) {
@@ -79,30 +78,33 @@ int execute(char *code) {
 }
 
 int nextCycle(char ** instArr, int maxPC, int repeat) {
+    static int sqsh = 0;
     /* do all the if check to check for hazards */
     /* if not just call execute next and roll the registers */
-    write_back(); /* dont have any error states for writback*/
+    /* dont have any error states for writback*/
     
 
 /* ==============================================================
  * changed everything so that INSTRUCTIONS are much different
  * 
  * TODO :
- * - change all do* IF assignments
  * - change all the pipline update functs
  */
 
 
-
-    memory();
-    if(execute_stage()) {
+    sqsh = memory(sqsh);
+    if((sqsh = execute_stage(sqsh))) {
+        if(sqsh == -1) {
+            cpu->pLine.EX->inst = kSTALL;
+            return 0;
+        }
        return 0; 
     }
     decode();
-    executeNext(instArr, maxPC, repeat); /* functions as our fetch */
+    executeNext(instArr, maxPC, repeat); /* functions as our fetch & PC */
     return 0;
 }
-/*
+
 int executeNext(char ** instArr, int maxPC, int repeat) {
 	int i = 0;
 	if(repeat == -1) {
@@ -239,8 +241,7 @@ int doAdd(char *code) {
 #endif
 	cpu->reg[inst->rd] = cpu->reg[inst->rs] + cpu->reg[inst->rt];
 	cpu->pc++;
-	free(inst);	
-    cpu->pLine.IF = ADD;
+    cpu->pLine.IF = inst;
 	return 0;
 }
 
@@ -262,8 +263,7 @@ int doOr(char *code) {
 #endif
 	cpu->reg[inst->rd] = cpu->reg[inst->rs] | cpu->reg[inst->rt];
 	cpu->pc++;
-	free(inst);	
-    cpu->pLine.IF = OR;
+    cpu->pLine.IF = inst;
 	return 0;
 }
 int doAnd(char *code) {
@@ -279,8 +279,7 @@ int doAnd(char *code) {
 #endif
 	cpu->reg[inst->rd] = cpu->reg[inst->rs] & cpu->reg[inst->rt];
 	cpu->pc++;
-	free(inst);	
-    cpu->pLine.IF = AND;
+    cpu->pLine.IF = inst;
 	return 0;
 }
 int doAddi(char *code) {
@@ -300,8 +299,7 @@ int doAddi(char *code) {
 #endif
 	cpu->reg[inst->rt] = cpu->reg[inst->rs] + inst->imm;
 	cpu->pc++;
-	free(inst);	
-    cpu->pLine.IF = ADDI;
+    cpu->pLine.IF = inst;
 	return 0;
 }
 
@@ -318,8 +316,8 @@ int doSub(char *code) {
 #endif
 	cpu->reg[inst->rd] = cpu->reg[inst->rs] - cpu->reg[inst->rt];
 	cpu->pc++;
-	free(inst);	
-    cpu->pLine.IF = SUB;
+		
+    cpu->pLine.IF = inst;
 	return 0;
 }
 
@@ -336,8 +334,8 @@ int doSlt(char *code) {
 #endif
 	cpu->reg[inst->rd] = cpu->reg[inst->rt] < cpu->reg[inst->rs];
 	cpu->pc++;
-	free(inst);	
-    cpu->pLine.IF = SLT;
+		
+    cpu->pLine.IF = inst;
 	return 0;
 }
 
@@ -352,13 +350,15 @@ int doBeq(char *code) {
 								cpu->reg[inst->rt], inst->imm);
 	fprintf(stderr,"\n");
 #endif
+    inst->rd = 0;
 	if( cpu->reg[inst->rs] == cpu->reg[inst->rt] ) {
 		cpu->pc = inst->imm;
+        inst->rd = 1;
 	} else {
 		cpu->pc++;
 	}
-	free(inst);	
-    cpu->pLine.IF = BEQ;
+		
+    cpu->pLine.IF = inst;
 	return 0;
 }
 
@@ -373,12 +373,14 @@ int doBne(char *code) {
 								cpu->reg[inst->rt], inst->imm);
 	fprintf(stderr,"bne\n");
 #endif
+    inst->rd = 0;
 	if( cpu->reg[inst->rs] != cpu->reg[inst->rt] ) {
+        inst->rd = 1;           /* rd contains the result of the branch */
 		cpu->pc += inst->imm;
 	}
 	cpu->pc++;
-	free(inst);	
-    cpu->pLine.IF = BNE;
+    	
+    cpu->pLine.IF = inst;
 	return 0;
 }
 int doLw(char *code) {
@@ -398,8 +400,8 @@ int doLw(char *code) {
 	addr = cpu->reg[inst->rt] + inst->imm;
 	cpu->reg[inst->rs] = cpu->dmem[addr];
 	cpu->pc++;
-	free(inst);	
-    cpu->pLine.IF = LW;
+		
+    cpu->pLine.IF = inst;
 	return 0;
 }
 int doSw(char *code) {
@@ -419,8 +421,8 @@ int doSw(char *code) {
 	addr = cpu->reg[inst->rt] + inst->imm;
 	cpu->dmem[addr] = cpu->reg[inst->rs];
 	cpu->pc++;
-	free(inst);	
-    cpu->pLine.IF = SW;
+		
+    cpu->pLine.IF = inst;
 	return 0;
 }
 int doJ(char *code) {
@@ -434,8 +436,8 @@ int doJ(char *code) {
 	fprintf(stderr,"\n");
 #endif
 	cpu->pc = inst->imm;
-	free(inst);	
-    cpu->pLine.IF = J;
+		
+    cpu->pLine.IF = inst;
 	return 0;
 }
 int doJr(char *code) {
@@ -450,8 +452,8 @@ int doJr(char *code) {
 #endif
 
 	cpu->pc = cpu->reg[inst->rt];
-	free(inst);	
-    cpu->pLine.IF = JR;
+		
+    cpu->pLine.IF = inst;
 	return 0;
 }
 /*
@@ -470,8 +472,7 @@ int doJal(char *code) {
 #endif
 	cpu->reg[REG_RA] = cpu->pc + 1;
 	cpu->pc = inst->imm;
-	free(inst);	
-    cpu->pLine.IF = JAL;
+    cpu->pLine.IF = inst;
 	return 0;
 }
 
@@ -518,6 +519,7 @@ INST_STRUCT *parseRType(char *code) {
 	}	
 	temp = temp >> 1; /* account for overshift */
 	inst->rd = temp;
+    inst->squash = 0;	
 
 	return inst;
 }
@@ -568,6 +570,7 @@ INST_STRUCT *parseIType(char *code) {
 	temp = temp >> 1; /* account for overshift */
 	inst->imm = temp;
 
+    inst->squash = 0;	
 	return inst;
 }
 
@@ -590,29 +593,57 @@ INST_STRUCT *parseJType(char *code) {
 	}	
 	temp = temp >> 1; /* account for overshift */
 	inst->imm = temp;
-	
+    inst->squash = 0;	
 	return inst;
 }
 
 
 
 void write_back() {
-    cpu->pLine.WB = cpu->pLine.MEM;
 }
 
-void memory() {
-    cpu->pLine.MEM = cpu->pLine.EX;
-}
-
-int execute_stage() {
-    cpu->pLine.EX = cpu->pLine.ID;
-    if((cpu->pLine.EX == SW) || (cpu->pLine.EX == SW))  {
-        cpu->pLine.EX = SQUASH; 
-        return 1;
+int memory(int sqsh) {
+    if(cpu->pLine.EX->squash);
+    if( cpu->pLine.MEM->inst == kBEQ || cpu->pLine.MEM->inst == kBNE) {
+        if(cpu->pLine.MEM->rd) {
+            cpu->pLine.IF->squash = 1;
+            cpu->pLine.ID->squash = 1;
+            cpu->pLine.EX->squash = 1;
+        /* squash the three first things */
+            return 3;
+        }
+        /* don't squash */
     }
+    cpu->pLine.MEM = cpu->pLine.EX;
+    return sqsh;
     return 0;
 }
 
-void decode() {
+int execute_stage(int sqsh) {
+    INST_STRUCT *tmpI;
+    if(sqsh) {
+        
+        tmpI = cpu->pLine.IF;     
+
+        cpu->pLine.IF = cpu->pLine.EX;
+        cpu->pLine.EX = cpu->pLine.ID;
+        cpu->pLine.ID = tmpI;
+
+        cpu->pLine.IF->squash = 0;
+        return --sqsh;
+    }
+    if((cpu->pLine.EX->inst == kSW) || (cpu->pLine.EX->inst == kLW))  {
+        cpu->pLine.EX->squash = 1; 
+        return -1;
+    }
+    cpu->pLine.EX = cpu->pLine.ID;
+    return 0;
+}
+
+int decode() {
+    if(cpu->pLine.ID->squash) {
+        return 1;
+    }
     cpu->pLine.ID = cpu->pLine.IF;
+    return 0;
 }

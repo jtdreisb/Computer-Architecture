@@ -36,7 +36,6 @@ typedef enum {
 
 /* Instruction Type Definition */ 
 typedef enum {
-    kSQUASH = 0,
     kSTALL,
     kADD,
     kADDI,
@@ -57,16 +56,16 @@ typedef struct {
     INSTRUCTION inst;
 	int rs,rt,rd;
 	int imm;
+    int squash;
 }INST_STRUCT;
 
 
 /* Pipeline Definition */
 typedef struct {
-    INST_STRUCT IF;
-    INST_STRUCT ID;
-    INST_STRUCT EX;
-    INST_STRUCT MEM;
-    INST_STRUCT WB;
+    INST_STRUCT *IF;
+    INST_STRUCT *ID;
+    INST_STRUCT *EX;
+    INST_STRUCT *MEM;
 }Pipeline;
 
 /* Processor Definition */
