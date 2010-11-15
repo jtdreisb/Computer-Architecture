@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
 		print_usage(NULL);
 	}
 
-	if(argc == 3) {
+	if(argc == 3 || argc == 4) {
 		c_fp = fopen(argv[2], "r");
 	} else {
 		c_fp = stdin;
@@ -132,6 +132,9 @@ int main(int argc, char **argv) {
 			zeroCPU();
 			fprintf(stdout,"\n\tSimulator reset\n");
 			break;
+		case 'b':
+            fprintf(stdout,"need to impliment this\n");
+            break;
 		case 'q':
 			fprintf(stdout,"\n");
 			exit(0);

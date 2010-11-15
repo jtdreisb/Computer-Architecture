@@ -147,6 +147,8 @@ void zeroCPU() {
 	for(i=0; i<8192;i++) {
 		cpu->dmem[i] = 0;
 	}
+    cpu->BT = 0;
+    cpu->BNT = 0;
 }
 int executeInstruction(char *code) {
 	int ret;
