@@ -40,8 +40,8 @@ typedef struct {
 	int pc;
 	int reg[32];
 	int dmem[8192];
-    int BT;
-    int BNT;
+    int BCOUNT;
+    int BMISS;
 }MIPS_CPU;
 
 

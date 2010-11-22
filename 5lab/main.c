@@ -135,6 +135,9 @@ int main(int argc, char **argv) {
 		case 'b':
             fprintf(stdout,"need to impliment this\n");
             break;
+        case 'o':
+            fprintf(stdout,"need to impliment this\n");
+            break;
 		case 'q':
 			fprintf(stdout,"\n");
 			exit(0);

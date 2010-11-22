@@ -147,8 +147,8 @@ void zeroCPU() {
 	for(i=0; i<8192;i++) {
 		cpu->dmem[i] = 0;
 	}
-    cpu->BT = 0;
-    cpu->BNT = 0;
+    cpu->BCOUNT = 0;
+    cpu->BMISS = 0;
 }
 int executeInstruction(char *code) {
 	int ret;
@@ -306,7 +306,7 @@ int doSlt(char *code) {
 								cpu->reg[inst->rt], inst->rd);
 	fprintf(stderr,"\n");
 #endif
-	cpu->reg[inst->rd] = cpu->reg[inst->rt] < cpu->reg[inst->rs];
+	cpu->reg[inst->rd] = cpu->reg[inst->rs] > cpu->reg[inst->rt];
 	cpu->pc++;
 	free(inst);	
 	return 0;
@@ -323,10 +323,11 @@ int doBeq(char *code) {
 	fprintf(stderr,"\n");
 #endif
 	if( cpu->reg[inst->rs] == cpu->reg[inst->rt] ) {
-		cpu->pc = inst->imm;
+		cpu->pc += inst->imm;
 	} else {
 		cpu->pc++;
 	}
+    cpu->BCOUNT++;
 	free(inst);	
 	return 0;
 }
@@ -413,7 +414,7 @@ int doJr(char *code) {
 	fprintf(stderr,"\n");
 #endif
 
-	cpu->pc = cpu->reg[inst->rt];
+	cpu->pc = cpu->reg[inst->rs];
 	free(inst);	
 	return 0;
 }
@@ -504,7 +505,7 @@ INST_STRUCT *parseIType(char *code) {
 	temp = temp >> 1; /* account for overshift */
 	inst->rt = temp;
 
-	/* rt */
+	/* rs */
 	temp = 0;
 	for(i=0;i<5;i++) {
 		if(*p == '1') {
@@ -542,7 +543,7 @@ INST_STRUCT *parseJType(char *code) {
 		perror("parseJType");
 		exit(1);
 	}
-	p = code + 6;	/* rs */
+	p = code + 6;	/* address */
 	for(i=0;i<26;i++) {
 		if(*p == '1') {
 			temp++;  	

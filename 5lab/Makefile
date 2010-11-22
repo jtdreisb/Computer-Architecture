@@ -4,7 +4,7 @@ CFLAGS = -ansi -pedantic -Wall -g
 
 LDFLAGS =  
 
-TARGET = lab3
+TARGET = lab5
 
 OBJS = $(TARGET).o
 
@@ -17,13 +17,13 @@ EXTRACLEAN = $(TARGET)
 DIFF = diff -w -B 
 
 
-all: clean $(TARGET)
+all: $(TARGET)
 
 clean:
 	rm -f $(TARGET)
-$(TARGET): 
+$(TARGET): main.c parser.c parser.h mipsCPU.c mipsCPU.h
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $(TARGET) $(SRC) 
-depend:
+depend: 
 	@echo Regenerating local dependencies
 	@makedepend $(SRC) $(HEADERS)
 tags: $(SRC) $(HEADERS)

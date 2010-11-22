@@ -332,7 +332,7 @@ void getRegErr(char *s) {
 char * getReg(char * code, char *arg, int reg) {
 	char *p = arg;	
 	if(*p != '$') {
-		fprintf(stderr, arg);
+		fprintf(stderr,"%s", arg);
 		fprintf(stderr,"\n");
 		fprintf(stderr,"getReg: invalid REG\n");
 		exit(1);
