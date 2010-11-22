@@ -51,6 +51,12 @@ void printMem(int from, int to) {
 	}
 }
 
+void printBranch() {
+    fprintf(stdout, "accuracy %.2f%% ", 100.0*((double)cpu->BHIT)/cpu->BCOUNT);
+    fprintf(stdout, "(%d correct predictions, ", cpu->BHIT);
+    fprintf(stdout, "%d predictions)\n", cpu->BCOUNT);
+}
+
 void initMIPS () {
 	if(!cpu) {
 		cpu = malloc(sizeof(*cpu));
@@ -138,6 +144,7 @@ void dumpRegs() {
 			cpu->reg[REG_SP],
 			cpu->reg[REG_RA]);
 }
+
 void zeroCPU() {
 	int i;
 	cpu->pc = 0;
@@ -148,7 +155,11 @@ void zeroCPU() {
 		cpu->dmem[i] = 0;
 	}
     cpu->BCOUNT = 0;
-    cpu->BMISS = 0;
+    cpu->BHIT = 0;
+    cpu->indexor = 0;
+    for(i = 0; i < 256; i++) {
+        cpu->branchp[i] = 0;
+    }
 }
 int executeInstruction(char *code) {
 	int ret;
@@ -324,9 +335,8 @@ int doBeq(char *code) {
 #endif
 	if( cpu->reg[inst->rs] == cpu->reg[inst->rt] ) {
 		cpu->pc += inst->imm;
-	} else {
-		cpu->pc++;
 	}
+    cpu->pc++;
     cpu->BCOUNT++;
 	free(inst);	
 	return 0;
@@ -342,13 +352,39 @@ int doBne(char *code) {
 								cpu->reg[inst->rt], inst->imm);
 	fprintf(stderr,"bne\n");
 #endif
+
 	if( cpu->reg[inst->rs] != cpu->reg[inst->rt] ) {
+        /* we took the branch */
 		cpu->pc += inst->imm;
-	}
+        
+        if(cpu->branchp[cpu->indexor] > 1) {
+            /* we guessed right */
+            cpu->BHIT++;
+        }
+        if(cpu->branchp[cpu->indexor] != 3) {
+            cpu->branchp[cpu->indexor]++;
+        }
+        cpu->indexor = (cpu->indexor << 1) +1;
+
+    } else {
+        /* branch was not taken */
+        if(cpu->branchp[cpu->indexor] < 2) {
+            /* we guessed right */
+            cpu->BHIT++;
+        }
+
+        if(cpu->branchp[cpu->indexor] != 0) {
+            cpu->branchp[cpu->indexor]--;
+        }
+        cpu->indexor = (cpu->indexor << 1);
+    }
+    cpu->indexor &= mask;
 	cpu->pc++;
+    cpu->BCOUNT++;
 	free(inst);	
 	return 0;
 }
+
 int doLw(char *code) {
 	INST_STRUCT *inst;
 	int addr;
@@ -414,7 +450,7 @@ int doJr(char *code) {
 	fprintf(stderr,"\n");
 #endif
 
-	cpu->pc = cpu->reg[inst->rs];
+	cpu->pc = cpu->reg[inst->rt];
 	free(inst);	
 	return 0;
 }

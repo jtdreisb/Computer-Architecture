@@ -15,6 +15,8 @@
 void print_usage(char *arg0);
 void printHelp();
 
+unsigned char mask;
+
 int main(int argc, char **argv) {
 	FILE *c_fp, *i_fp;
 
@@ -30,7 +32,7 @@ int main(int argc, char **argv) {
 		perror("mallocing bufs");
 		exit(1);
 	}
-	if(argc < 2 || argc > 3) {
+	if(argc < 2 || argc > 4) {
 		print_usage(NULL);
 	}
 
@@ -39,6 +41,19 @@ int main(int argc, char **argv) {
 	} else {
 		c_fp = stdin;
 	}
+
+    if(argc == 4) {
+        if(*argv[3] == '2') {
+            mask = 0x03;
+        } else if(*argv[3] == '4') {
+            mask = 0x0F;
+        } else {
+            mask = 0xFF;
+        }
+    } else { 
+        mask = 0x03;
+    }
+
 	if(!c_fp) {
 		perror("MAIN\n");
 		exit(1);
@@ -133,7 +148,7 @@ int main(int argc, char **argv) {
 			fprintf(stdout,"\n\tSimulator reset\n");
 			break;
 		case 'b':
-            fprintf(stdout,"need to impliment this\n");
+            printBranch();
             break;
         case 'o':
             fprintf(stdout,"need to impliment this\n");

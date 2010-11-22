@@ -41,10 +41,12 @@ typedef struct {
 	int reg[32];
 	int dmem[8192];
     int BCOUNT;
-    int BMISS;
+    int BHIT;
+    unsigned char indexor;
+    int branchp[256];
 }MIPS_CPU;
 
-
+extern unsigned char mask;
 
 void initMIPS ();
 int execute(char *code);
@@ -52,3 +54,4 @@ void dumpRegs();
 void zeroCPU();
 int executeNext(char ** instArr, int maxPC, int repeat);
 void printMem(int from, int to);
+void printBranch();
