@@ -51,6 +51,19 @@ void printMem(int from, int to) {
 	}
 }
 
+void printO() {
+    int i;
+    FILE *fp;
+    fp = fopen("coordinates.csv", "w");
+    if(!fp) {
+        perror("print coords");
+        exit(1);
+    }
+    for(i = 0; i < 100; i++) {
+        fprintf(fp, "%d,%d\n", cpu->dmem[i], cpu->dmem[i+1]);
+    }
+    fclose(fp);
+}
 void printBranch() {
     fprintf(stdout, "accuracy %.2f%% ", 100.0*((double)cpu->BHIT)/cpu->BCOUNT);
     fprintf(stdout, "(%d correct predictions, ", cpu->BHIT);
