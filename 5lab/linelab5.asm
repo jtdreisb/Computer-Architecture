@@ -41,7 +41,7 @@ line: add $s0, $0, $a0
     addi $sp, $sp, -1
     sw $ra, 0($sp)
     jal abs
-    lw $ra, 0(sp)
+    lw $ra, 0($sp)
     addi $sp, $sp, 1
     add $t1, $0, $v0
 
@@ -50,7 +50,7 @@ line: add $s0, $0, $a0
     addi $sp, $sp, -1
     sw $ra, 0($sp)
     jal abs
-    lw $ra, 0(sp)
+    lw $ra, 0($sp)
     addi $sp, $sp, 1
     add $t2, $0, $v0
 
@@ -83,11 +83,16 @@ doswapx: add $s0, $s0, $s2
     sub $s1, $s1, $s3
 getdelta: sub $s5, $s2, $s0
         sub $a0, $s3, $s1
+        addi $sp, $sp, -1
+        sw $ra, 0($sp)
         jal abs
+        lw $ra, 0($sp)
+        addi $sp, $sp, 1
         add $s6, $v0, $0
 # y = y0
         add $t1, $s1, $0
 # x = x0
+        add $s7, $0, $0
         add $t0, $s0, $0
         slt $t3, $s1, $s3
         bne $t3, $0, pos 
@@ -96,27 +101,35 @@ getdelta: sub $s5, $s2, $s0
 
 pos: addi $t2, $0, 1
 init: addi $s2, $s2, 1
-loop: bne $s4, $0, rev
+loop2: bne $s4, $0, rev
     add $a0, $t0, $0
     add $a1, $t1, $0
+    addi $sp, $sp, -1
+    sw $ra, 0($sp)
     jal plot
+    lw $ra, 0($sp)
+    addi $sp, $sp, 1
     j error
 rev: add $a1, $t0, $0
     add $a0, $t1, $0
+    addi $sp, $sp, -1
+    sw $ra, 0($sp)
     jal plot
+    lw $ra, 0($sp)
+    addi $sp, $sp, 1
 
 error: add $s7, $s7, $s6
-    add $t4, $s7, $s7
+    add $t4, $s7, $s7 # 2 * error
     addi $t4, $t4, 1
-    slt $t5, $s5, $t4
-    bne $0, $t5, errbig
-    j skip
-errbig: add $t1, $t1, $s6
+    slt $t5, $s5, $t4 #2*error >= deltax
+    bne $0, $t5, skip
+    add $t1, $t1, $t2
     sub $s7, $s7, $s5
 #loop check
-skip: slt $t5, $s2, $t0
+skip: slt $t5, $t0, $s2
+    addi $t0, $t0, 1
     bne $0, $t5, finish
-    j loop
+    j loop2
 finish: jr $ra
 
 
