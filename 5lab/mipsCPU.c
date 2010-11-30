@@ -59,9 +59,10 @@ void printO() {
         perror("print coords");
         exit(1);
     }
-    for(i = 0; i < 100; i++) {
+    for(i = 0; i < 333;i += 2) {
         fprintf(fp, "%d,%d\n", cpu->dmem[i], cpu->dmem[i+1]);
     }
+    fprintf(fp, "%d,%d", cpu->dmem[i], cpu->dmem[i+1]);
     fclose(fp);
 }
 void printBranch() {

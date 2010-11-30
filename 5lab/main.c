@@ -151,7 +151,7 @@ int main(int argc, char **argv) {
             printBranch();
             break;
         case 'o':
-            fprintf(stdout,"need to impliment this\n");
+            printO();
             break;
 		case 'q':
 			fprintf(stdout,"\n");

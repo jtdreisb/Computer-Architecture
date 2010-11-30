@@ -4,79 +4,79 @@
 
 #main
 
-        #loads stuff to pass to function head
-        addi $a0, $0, 30
+        addi $sp, $0, 4095	# initialize stack pointer
+
+        
+        addi $a0, $0, 30  #loads stuff to pass to function head
         addi $a1, $0, 100
         addi $a2, $0, 40
         jal circle
 
-        #loads stuff to pass to function body
-        addi $a0, $0, 30
+        
+        addi $a0, $0, 30  #loads stuff to pass to function body
         addi $a1, $0, 80
         addi $a2, $0, 30
         addi $a3, $0, 30
         jal line
 
-        #loads stuff to pass to function left leg
-        addi $a0, $0, 20
+        addi $a0, $0, 20 #loads stuff to pass to function left leg
         addi $a1, $0, 1
         addi $a2, $0, 30
         addi $a3, $0, 30
         jal line 
 
-        #loads stuff to pass to function right leg
-        addi $a0, $0, 40
+        
+        addi $a0, $0, 40 #loads stuff to pass to function right leg
         addi $a1, $0, 1
         addi $a2, $0, 30
         addi $a3, $0, 30
         jal line 
 
-        #loads stuff to pass to function left arm
-        addi $a0, $0, 15
+        
+        addi $a0, $0, 15 #loads stuff to pass to function left arm
         addi $a1, $0, 60
         addi $a2, $0, 30
         addi $a3, $0, 50
         jal line 
 
-        #loads stuff to pass to function right arm
-        addi $a0, $0, 30
+        addi $a0, $0, 30 #loads stuff to pass to function right arm
         addi $a1, $0, 50
         addi $a2, $0, 45
         addi $a3, $0, 60
         jal line 
 
-        #loads stuff to pass to function left eye
-        addi $a0, $0, 24
+       
+        addi $a0, $0, 24 #loads stuff to pass to function left eye
         addi $a1, $0, 105
         addi $a2, $0, 3
         jal circle 
 
-        #loads stuff to pass to function right eye
-        addi $a0, $0, 36
+      
+        addi $a0, $0, 36 #loads stuff to pass to function right eye
         addi $a1, $0, 105
         addi $a2, $0, 3
         jal circle
 
-        #loads stuff to pass to function mouth center
-        addi $a0, $0, 25
+       
+        addi $a0, $0, 25 #loads stuff to pass to function mouth center
         addi $a1, $0, 90
         addi $a2, $0, 35
         addi $a3, $0, 90
-        jal circle
+        jal line
 
-        #loads stuff to pass to function mouth left 
-        addi $a0, $0, 25
+        
+        addi $a0, $0, 25 #loads stuff to pass to function mouth left
         addi $a1, $0, 90
         addi $a2, $0, 20
         addi $a3, $0, 95
-        jal circle
+        jal line
 
-        #loads stuff to pass to function mouth right
-        addi $a0, $0, 35
+      
+        addi $a0, $0, 35  #loads stuff to pass to function mouth right
         addi $a1, $0, 90
         addi $a2, $0, 20
         addi $a3, $0, 95
-        jal circle
+        jal line
         
         j close
 

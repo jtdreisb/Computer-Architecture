@@ -55,3 +55,4 @@ void zeroCPU();
 int executeNext(char ** instArr, int maxPC, int repeat);
 void printMem(int from, int to);
 void printBranch();
+void printO();
