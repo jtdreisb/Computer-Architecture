@@ -514,6 +514,8 @@ int getLabelOffset(char *arg, int curIndex) {
 			p++;
 		}	
 		*p = '\0';
+
+fprintf(stdout, "lArr[iCount] is \"%s\", arg is \"%s\"\n",lArr[iCount]->name, arg);
 		if(!strcmp(lArr[iCount]->name,arg)) {
 			imm = lArr[iCount]->line - (curIndex+1);
 			break;
