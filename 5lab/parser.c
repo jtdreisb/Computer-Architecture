@@ -334,7 +334,7 @@ char * getReg(char * code, char *arg, int reg) {
 	char *p = arg;	
 	if(*p != '$') {
 		fprintf(stderr,"%s", arg);
-		fprintf(stderr,"\n");
+		fprintf(stderr," || reg = %d\n",reg);
 		fprintf(stderr,"getReg: invalid REG\n");
 		exit(1);
 	}	

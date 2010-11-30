@@ -200,7 +200,7 @@ plot:   sw $a0, 0($a2)
         jr $ra  
 #$a0 - x  
 #$v0 - return absolute val  
-abs: addi $t1, %0, 1  
+abs: addi $t1, $0, 1  
     addi $t2, $0, 31  
 loop: add $t1, $t1, $t1 #multiply by 2  
     addi $t2, $t2, -1  
