@@ -95,19 +95,19 @@ circle: and $t0, $0, $0
         addi $t6, $0, 0 #this is holding mem location  
         add $t1, $t2, $a2 # y = r  
         addi $t2, $t2, 3  # g = 3  
-        sub $t2, $t2, $a2 # g = 3-r  
-        sub $t2, $t2, $a2 # g = 3-2*r  
+        sub $t2, $a2, $t2 # g = 3-r  
+        sub $t2, $a2, $t2 # g = 3-2*r  
   
         addi $t3, $t3, 10 # diagonalInc = 10  
-        sub $t3, $t3, $a2 # diagonalInc = 10 - r  
-        sub $t3, $t3, $a2 # diagonalInc = 10 - 2*r  
-        sub $t3, $t3, $a2 # diagonalInc = 10 - 3*r  
-        sub $t3, $t3, $a2 # diagonalInc = 10 - 4*r  
+        sub $t3, $a2, $t3 # diagonalInc = 10 - r  
+        sub $t3, $a2, $t3 # diagonalInc = 10 - 2*r  
+        sub $t3, $a2, $t3 # diagonalInc = 10 - 3*r  
+        sub $t3, $a2, $t3 # diagonalInc = 10 - 4*r  
   
         addi $t4, $t4, 6 # rightInc = 6  
   
 while:  addi $t7, $t0, -1  
-        slt $t7, $t7, $t1 # x<= y  
+        slt $t7, $t1, $t7 # x<= y  
         bne $0, $t7, end  
   
         add $t5, $a0, $t0 #plot (xc+x)  
@@ -121,11 +121,11 @@ while:  addi $t7, $t0, -1
         add $t5, $a0, $t0 #plot (xc+x)  
         sw $t5, 0($t6)   
   
-        sub $t5, $a1, $t1 #plot (yc-y)  
+        sub $t5, $t1, $a1 #plot (yc-y)  
         sw $t5, 0($t6)   
         addi $t6, $t6, 1 #this is holding mem location  
   
-        sub $t5, $a0, $t0 #plot (xc-x)  
+        sub $t5, $t0, $a0 #plot (xc-x)  
         sw $t5, 0($t6)   
   
         add $t5, $a1, $t1 #plot (yc+y)  
@@ -133,10 +133,10 @@ while:  addi $t7, $t0, -1
         addi $t6, $t6, 1 #this is holding mem location  
           
   
-        sub $t5, $a0, $t0 #plot (xc-x)  
+        sub $t5, $t0, $a0 #plot (xc-x)  
         sw $t5, 0($t6)   
   
-        sub $t5, $a1, $t1 #plot (yc-y)  
+        sub $t5, $t1, $a1 #plot (yc-y)  
         sw $t5, 0($t6)   
         addi $t6, $t6, 1 #this is holding mem location  
   
@@ -152,11 +152,11 @@ while:  addi $t7, $t0, -1
         add $t5, $a0, $t1 #plot (xc+y)  
         sw $t5, 0($t6)   
   
-        sub $t5, $a1, $t0 #plot (yc-x)  
+        sub $t5, $t0, $a1 #plot (yc-x)  
         sw $t5, 0($t6)   
         addi $t6, $t6, 1 #this is holding mem location  
   
-        sub $t5, $a0, $t1 #plot (xc-y)  
+        sub $t5, $t1, $a0 #plot (xc-y)  
         sw $t5, 0($t6)   
   
         add $t5, $a1, $t0 #plot (yc+x)  
@@ -164,10 +164,10 @@ while:  addi $t7, $t0, -1
         addi $t6, $t6, 1 #this is holding mem location  
           
   
-        sub $t5, $a0, $t1 #plot (xc-y)  
+        sub $t5, $t1, $a0 #plot (xc-y)  
         sw $t5, 0($t6)   
   
-        sub $t5, $a1, $t0 #plot (yc-x)  
+        sub $t5, $t0, $a1 #plot (yc-x)  
         sw $t5, 0($t6)   
         addi $t6, $t6, 1 #this is holding mem location         
   
@@ -210,7 +210,7 @@ loop: add $t1, $t1, $t1 #multiply by 2
     bne $0, $t3, invert  
     add $v0, $a0, $0  
     jr $ra  
-invert: sub $v0, $0, $a0  
+invert: sub $v0, $a0, $0  
     jr $ra  
   
 # Draw Line    
@@ -229,8 +229,8 @@ line: add $s0, $0, $a0
     add $s1, $0, $a1  
     add $s2, $0, $a2  
     add $s3, $0, $a3  
-    sub $t1, $a3, $a1  
-    sub $t2, $a2, $a0  
+    sub $t1, $a1, $a3  
+    sub $t2, $a0, $a2  
   
 #absolute val of y1-y0  
     add $a0, $0, $t1  
@@ -259,26 +259,26 @@ setst: add $s4, $0, $0
 swapxy: bne $0, $s4, doswapxy  
     j swapx  
 doswapxy: add $s0, $s0, $s1  
-        sub $s1, $s0, $s1  
-        sub $s0, $s0, $s1  
+        sub $s1, $s1, $s0  
+        sub $s0, $s1, $s0  
   
         add $s2, $s2, $s3  
-        sub $s3, $s2, $s3  
-        sub $s2, $s2, $s3  
+        sub $s3, $s3, $s2  
+        sub $s2, $s3, $s2  
   
 swapx:  slt $t1, $s2, $s0  
         bne $0, $t1, doswapx  
         j getdelta  
 # swap (x0 , x1) (y0, y1)  
 doswapx: add $s0, $s0, $s2  
-    sub $s2, $s0, $s2  
-    sub $s0, $s0, $s2  
+    sub $s2, $s2, $s0  
+    sub $s0, $s2, $s0  
   
     add $s1, $s1, $s3  
-    sub $s3, $s1, $s3  
-    sub $s1, $s1, $s3  
-getdelta: sub $s5, $s2, $s0  
-        sub $a0, $s3, $s1  
+    sub $s3, $s3, $s1  
+    sub $s1, $s3, $s1  
+getdelta: sub $s5, $s0, $s2  
+        sub $a0, $s1, $s3  
         addi $sp, $sp, -1  
         sw $ra, 0($sp)  
         jal abs  
@@ -320,7 +320,7 @@ error: add $s7, $s7, $s6
     slt $t5, $s5, $t4 #2*error >= deltax  
     bne $0, $t5, skip  
     add $t1, $t1, $t2  
-    sub $s7, $s7, $s5  
+    sub $s7, $s5, $s7  
 #loop check  
 skip: slt $t5, $t0, $s2  
     addi $t0, $t0, 1  

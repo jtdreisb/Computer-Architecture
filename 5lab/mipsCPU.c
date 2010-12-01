@@ -87,7 +87,7 @@ void initMIPS () {
 
 int execute(char *code) {
 
-fprintf(stdout, "code in execute is %s\n", code);
+/*fprintf(stdout, "code in execute is %s\n", code);*/
 	if(!code || (strlen(code) != 32)) {
 		fprintf(stderr, "INVALID INSTRUCTION: EXECUTE\n");
 		return 1;
@@ -102,7 +102,9 @@ int executeNext(char ** instArr, int maxPC, int repeat) {
 	int i = 0;
 	if(repeat == -1) {
 		while(cpu->pc < maxPC+1) {
-				execute(instArr[cpu->pc]);
+				if(execute(instArr[cpu->pc])) {
+                    return 1;
+                }
 				i++;
 		}
 	} else {

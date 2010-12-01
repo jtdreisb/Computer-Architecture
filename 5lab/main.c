@@ -71,13 +71,13 @@ int main(int argc, char **argv) {
 		perror("malloc instArr");
 		exit(1);
 	}
-	i = 0;
 
+	i = 0;
 	while(!feof(i_fp)) {
 		if(i == ibuf_size) {
 			ibuf_size = ibuf_size + BUFSIZE;
-			fprintf(stderr, "\n BUFSIZE IS %d\n", ibuf_size);
-			instArr = realloc(instArr, ibuf_size);
+			/*fprintf(stderr, "char * is %d\n BUFSIZE IS %d\n",sizeof(char*), ibuf_size);*/
+			instArr = realloc(instArr, ibuf_size * sizeof(char *));
 			if(!instArr) {
 				perror("realloc instArr");
 				exit(1);
@@ -85,24 +85,28 @@ int main(int argc, char **argv) {
 		}
 		cbuf = getLine(cbuf, &cbuf_size, i_fp);	
 		if(!cbuf) {
-			break;
+            continue;
 		}	
+
 		instArr[i] = malloc(strlen(cbuf) * sizeof(char));
 		if(!instArr[i]) {
 			perror("main");
 			exit(1);
 		}
+        /*fprintf(stderr, "cbuf is %s\n", cbuf);*/
 		strcpy(instArr[i++],cbuf); 
+        /*fprintf(stderr,"%d ibuff\n", i-1);
+        fprintf(stderr, "instArr %s\n", instArr[i-1]);*/
 	}
 	iCount = i-1;
-	cbuf = malloc(cbuf_size);
+	cbuf = malloc(cbuf_size * sizeof(char));
 	if(!cbuf){
 		perror("mallocing bufs");
 		exit(1);
 	}
-for(i = 0; instArr[i]; i++) {
+/*for(i = 0; instArr[i]; i++) {
 fprintf(stdout, "in main code is %s\n", instArr[i]);
-}
+}*/
 	while(!feof(c_fp)){
 		fprintf(stdout, "\nmips> ");
 		cbuf = getLine(cbuf, &cbuf_size, c_fp);
