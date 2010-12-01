@@ -77,7 +77,7 @@
         addi $a2, $0, 20  
         addi $a3, $0, 95  
         jal line    
-        j end    
+        j close    
 #$a0 = xc  
 #$a1 = yc  
 #$a2 = r  
@@ -328,5 +328,5 @@ skip: slt $t5, $t0, $s2
     j loop2  
 finish: jr $ra  
   
-end: add $s1, $0, $0  
+close: add $s1, $0, $0  
   

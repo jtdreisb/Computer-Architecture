@@ -87,6 +87,7 @@ void initMIPS () {
 
 int execute(char *code) {
 
+fprintf(stdout, "code in execute is %s\n", code);
 	if(!code || (strlen(code) != 32)) {
 		fprintf(stderr, "INVALID INSTRUCTION: EXECUTE\n");
 		return 1;

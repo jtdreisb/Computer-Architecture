@@ -720,6 +720,7 @@ void parseInstruction(FILE * fp, const char * instruction, int insIndex, Label *
 		fprintf(fp,"\n");
 	}
 	free(inst);
+fprintf(stdout,"code in parseInstruction %s\n", code);
 }
 
 void generate(FILE *fp, char ** instArr, Label **lArr) {

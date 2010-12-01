@@ -100,7 +100,9 @@ int main(int argc, char **argv) {
 		perror("mallocing bufs");
 		exit(1);
 	}
-
+for(i = 0; instArr[i]; i++) {
+fprintf(stdout, "in main code is %s\n", instArr[i]);
+}
 	while(!feof(c_fp)){
 		fprintf(stdout, "\nmips> ");
 		cbuf = getLine(cbuf, &cbuf_size, c_fp);
