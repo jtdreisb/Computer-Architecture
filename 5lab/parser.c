@@ -128,7 +128,7 @@ Label ** addToLabels(char *line, int lineNo) {
 		perror("addLabel");
 		exit(1);
 	}
-    fprintf(stderr, "%-20s%d\n",label,curArri);
+/*    fprintf(stderr, "%-20s%d\n",label,curArri);*/
 	lbl->name = label;
 	lbl->line = lineNo;
 	arr[curArri] = lbl;	
@@ -525,7 +525,7 @@ int getLabelOffset(char *arg, int curIndex) {
 		}
 		iCount++;
 	}
-    fprintf(stdout, "%s is at index %d\n", arg, iCount);
+/*    fprintf(stdout, "%s is at index %d\n", arg, iCount);*/
 	return imm;
 }
 

@@ -5,6 +5,7 @@
 #main  
   
         addi $sp, $0, 4095	# initialize stack pointer  
+        addi $t9, $0, 0 #this is holding mem location  
   
           
         addi $a0, $0, 30  #loads stuff to pass to function head  
@@ -92,7 +93,6 @@ circle: and $t0, $0, $0
         and $t4, $0, $0   
   
 #setting variables          
-        addi $t6, $0, 0 #this is holding mem location  
         add $t1, $t2, $a2 # y = r  
         addi $t2, $t2, 3  # g = 3  
         sub $t2, $a2, $t2 # g = 3-r  
@@ -106,70 +106,78 @@ circle: and $t0, $0, $0
   
         addi $t4, $t4, 6 # rightInc = 6  
   
-while:  addi $t7, $t0, -1  
-        slt $t7, $t1, $t7 # x<= y  
-        bne $0, $t7, end  
+while:  addi $t7, $t1, 1  
+        slt $t7, $t0, $t7 # x<= y  
+        beq $0, $t7, end  
   
         add $t5, $a0, $t0 #plot (xc+x)  
-        sw $t5, 0($t6)   
+        sw $t5, 0($t9)   
+        addi $t9, $t9, 1 #this is holding mem location         
   
         add $t5, $a1, $t1 #plot (yc+y)  
-        sw $t5, 0($t6)   
-        addi $t6, $t6, 1 #this is holding mem location  
+        sw $t5, 0($t9)   
+        addi $t9, $t9, 1 #this is holding mem location  
           
   
         add $t5, $a0, $t0 #plot (xc+x)  
-        sw $t5, 0($t6)   
+        sw $t5, 0($t9)   
+        addi $t9, $t9, 1 #this is holding mem location         
   
         sub $t5, $t1, $a1 #plot (yc-y)  
-        sw $t5, 0($t6)   
-        addi $t6, $t6, 1 #this is holding mem location  
+        sw $t5, 0($t9)   
+        addi $t9, $t9, 1 #this is holding mem location  
   
         sub $t5, $t0, $a0 #plot (xc-x)  
-        sw $t5, 0($t6)   
+        sw $t5, 0($t9)   
+        addi $t9, $t9, 1 #this is holding mem location         
   
         add $t5, $a1, $t1 #plot (yc+y)  
-        sw $t5, 0($t6)   
-        addi $t6, $t6, 1 #this is holding mem location  
+        sw $t5, 0($t9)   
+        addi $t9, $t9, 1 #this is holding mem location  
           
   
         sub $t5, $t0, $a0 #plot (xc-x)  
-        sw $t5, 0($t6)   
+        sw $t5, 0($t9)   
+        addi $t9, $t9, 1 #this is holding mem location         
   
         sub $t5, $t1, $a1 #plot (yc-y)  
-        sw $t5, 0($t6)   
-        addi $t6, $t6, 1 #this is holding mem location  
+        sw $t5, 0($t9)   
+        addi $t9, $t9, 1 #this is holding mem location  
   
    
         add $t5, $a0, $t1 #plot (xc+y)  
-        sw $t5, 0($t6)   
+        sw $t5, 0($t9)   
+        addi $t9, $t9, 1 #this is holding mem location         
   
         add $t5, $a1, $t0 #plot (yc+x)  
-        sw $t5, 0($t6)   
-        addi $t6, $t6, 1 #this is holding mem location  
+        sw $t5, 0($t9)   
+        addi $t9, $t9, 1 #this is holding mem location  
           
   
         add $t5, $a0, $t1 #plot (xc+y)  
-        sw $t5, 0($t6)   
+        sw $t5, 0($t9)   
+        addi $t9, $t9, 1 #this is holding mem location         
   
         sub $t5, $t0, $a1 #plot (yc-x)  
-        sw $t5, 0($t6)   
-        addi $t6, $t6, 1 #this is holding mem location  
+        sw $t5, 0($t9)   
+        addi $t9, $t9, 1 #this is holding mem location  
   
         sub $t5, $t1, $a0 #plot (xc-y)  
-        sw $t5, 0($t6)   
+        sw $t5, 0($t9)   
+        addi $t9, $t9, 1 #this is holding mem location         
   
         add $t5, $a1, $t0 #plot (yc+x)  
-        sw $t5, 0($t6)   
-        addi $t6, $t6, 1 #this is holding mem location  
+        sw $t5, 0($t9)   
+        addi $t9, $t9, 1 #this is holding mem location  
           
   
         sub $t5, $t1, $a0 #plot (xc-y)  
-        sw $t5, 0($t6)   
+        sw $t5, 0($t9)   
+        addi $t9, $t9, 1 #this is holding mem location         
   
         sub $t5, $t0, $a1 #plot (yc-x)  
-        sw $t5, 0($t6)   
-        addi $t6, $t6, 1 #this is holding mem location         
+        sw $t5, 0($t9)   
+        addi $t9, $t9, 1 #this is holding mem location         
   
         addi $t5, $t2, 1  
         slt $t5, $0, $t5 # g >=0   
@@ -192,11 +200,11 @@ end: jr $ra
   
 #a0 = first point  
 #a1 = second point  
-#a2 = location to start storing  
+#t9 = location to start storing  
   
-plot:   sw $a0, 0($a2)  
-        addi $a2, $a2, 1  
-        sw $a1, 0($a2)   
+plot:   sw $a0, 0($t9)  
+        addi $t9, $t9, 1  
+        sw $a1, 0($t9)   
         jr $ra  
 #$a0 - x  
 #$v0 - return absolute val  

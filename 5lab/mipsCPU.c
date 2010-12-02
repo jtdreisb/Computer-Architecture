@@ -59,10 +59,9 @@ void printO() {
         perror("print coords");
         exit(1);
     }
-    for(i = 0; i < 333;i += 2) {
+    for(i = 0; i < 334*2;i += 2) {
         fprintf(fp, "%d,%d\n", cpu->dmem[i], cpu->dmem[i+1]);
     }
-    fprintf(fp, "%d,%d", cpu->dmem[i], cpu->dmem[i+1]);
     fclose(fp);
 }
 void printBranch() {
@@ -319,6 +318,10 @@ int doSub(char *code) {
 	fprintf(stderr,"\n");
 #endif
 	cpu->reg[inst->rd] = cpu->reg[inst->rs] - cpu->reg[inst->rt];
+if(cpu->reg[inst->rd] < 0) {
+fprintf(stdout,"rd = %d: rs = %d: rt = %d\n",cpu->reg[inst->rd],
+                cpu->reg[inst->rs], cpu->reg[inst->rt]);
+}
 	cpu->pc++;
 	free(inst);	
 	return 0;
@@ -330,11 +333,11 @@ int doSlt(char *code) {
 		return 1;
 	}
 #ifdef DEBUG
-	fprintf(stderr, "if %d<%d= reg[%d]", cpu->reg[inst->rs], 
+	fprintf(stderr, "if %d>%d= reg[%d]", cpu->reg[inst->rs], 
 								cpu->reg[inst->rt], inst->rd);
 	fprintf(stderr,"\n");
 #endif
-	cpu->reg[inst->rd] = cpu->reg[inst->rs] > cpu->reg[inst->rt];
+    cpu->reg[inst->rd] = cpu->reg[inst->rs] > cpu->reg[inst->rt];
 	cpu->pc++;
 	free(inst);	
 	return 0;
@@ -350,12 +353,41 @@ int doBeq(char *code) {
 								cpu->reg[inst->rt], inst->imm);
 	fprintf(stderr,"\n");
 #endif
-	if( cpu->reg[inst->rs] == cpu->reg[inst->rt] ) {
+    if( cpu->reg[inst->rs] == cpu->reg[inst->rt] ) {
+        /* we took the branch */
+		cpu->pc += inst->imm;
+        
+        if(cpu->branchp[cpu->indexor] > 1) {
+            /* we guessed right */
+            cpu->BHIT++;
+        }
+        if(cpu->branchp[cpu->indexor] != 3) {
+            cpu->branchp[cpu->indexor]++;
+        }
+        cpu->indexor = (cpu->indexor << 1) +1;
+
+    } else {
+        /* branch was not taken */
+        if(cpu->branchp[cpu->indexor] < 2) {
+            /* we guessed right */
+            cpu->BHIT++;
+        }
+
+        if(cpu->branchp[cpu->indexor] != 0) {
+            cpu->branchp[cpu->indexor]--;
+        }
+        cpu->indexor = (cpu->indexor << 1);
+    }
+    cpu->indexor &= mask;
+	cpu->pc++;
+    cpu->BCOUNT++;
+	free(inst);
+/*	if( cpu->reg[inst->rs] == cpu->reg[inst->rt] ) {
 		cpu->pc += inst->imm;
 	}
     cpu->pc++;
     cpu->BCOUNT++;
-	free(inst);	
+	free(inst);	*/
 	return 0;
 }
 int doBne(char *code) {
