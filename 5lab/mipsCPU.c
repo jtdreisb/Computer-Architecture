@@ -317,11 +317,7 @@ int doSub(char *code) {
 								cpu->reg[inst->rt], inst->rd);
 	fprintf(stderr,"\n");
 #endif
-	cpu->reg[inst->rd] = cpu->reg[inst->rs] - cpu->reg[inst->rt];
-if(cpu->reg[inst->rd] < 0) {
-fprintf(stdout,"rd = %d: rs = %d: rt = %d\n",cpu->reg[inst->rd],
-                cpu->reg[inst->rs], cpu->reg[inst->rt]);
-}
+	cpu->reg[inst->rd] = cpu->reg[inst->rt] - cpu->reg[inst->rs];
 	cpu->pc++;
 	free(inst);	
 	return 0;
